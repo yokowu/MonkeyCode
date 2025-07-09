@@ -13,6 +13,13 @@ type OAuthConfig struct {
 	ClientID     string
 	ClientSecret string
 	RedirectURI  string
+	Scope        string
+	AuthorizeURL string
+	TokenURL     string
+	UserInfoURL  string
+	IDField      string
+	NameField    string
+	AvatarField  string
 }
 
 type OAuthUserInfo struct {
@@ -27,6 +34,14 @@ type OAuthSignUpOrInReq struct {
 	Platform    consts.UserPlatform `json:"platform" query:"platform" validate:"required"` // 第三方平台 dingtalk
 	SessionID   string              `json:"session_id" query:"session_id"`                 // 会话ID
 	RedirectURL string              `json:"redirect_url" query:"redirect_url"`             // 登录成功后跳转的 URL
+	InviteCode  string              `json:"inviate_code" query:"inviate_code"`             // 邀请码
+}
+
+func (o OAuthSignUpOrInReq) OAuthKind() consts.OAuthKind {
+	if o.InviteCode == "" {
+		return consts.OAuthKindLogin
+	}
+	return consts.OAuthKindInvite
 }
 
 type OAuthCallbackReq struct {
@@ -43,4 +58,20 @@ type OAuthState struct {
 	SessionID   string              `json:"session_id"`                                    // 会话ID
 	Platform    consts.UserPlatform `json:"platform" query:"platform" validate:"required"` // 第三方平台 dingtalk
 	RedirectURL string              `json:"redirect_url" query:"redirect_url"`             // 登录成功后跳转的 URL
+	InviteCode  string              `json:"inviate_code"`                                  // 邀请码
+}
+
+type OAuthAccessToken struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+	ExpiresIn    int64  `json:"expires_in"`
+	Scope        string `json:"scope"`
+}
+
+type GetAccessTokenReq struct {
+	GrantType    string `json:"grant_type"`
+	ClientID     string `json:"client_id"`
+	ClientSecret string `json:"client_secret"`
+	Code         string `json:"code"`
+	RedirectURL  string `json:"redirect_uri"`
 }

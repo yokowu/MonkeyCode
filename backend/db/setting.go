@@ -3,6 +3,7 @@
 package db
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -10,6 +11,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/chaitin/MonkeyCode/backend/db/setting"
+	"github.com/chaitin/MonkeyCode/backend/ent/types"
 	"github.com/google/uuid"
 )
 
@@ -24,12 +26,10 @@ type Setting struct {
 	ForceTwoFactorAuth bool `json:"force_two_factor_auth,omitempty"`
 	// DisablePasswordLogin holds the value of the "disable_password_login" field.
 	DisablePasswordLogin bool `json:"disable_password_login,omitempty"`
-	// EnableDingtalkOauth holds the value of the "enable_dingtalk_oauth" field.
-	EnableDingtalkOauth bool `json:"enable_dingtalk_oauth,omitempty"`
-	// DingtalkClientID holds the value of the "dingtalk_client_id" field.
-	DingtalkClientID string `json:"dingtalk_client_id,omitempty"`
-	// DingtalkClientSecret holds the value of the "dingtalk_client_secret" field.
-	DingtalkClientSecret string `json:"dingtalk_client_secret,omitempty"`
+	// DingtalkOauth holds the value of the "dingtalk_oauth" field.
+	DingtalkOauth *types.DingtalkOAuth `json:"dingtalk_oauth,omitempty"`
+	// CustomOauth holds the value of the "custom_oauth" field.
+	CustomOauth *types.CustomOAuth `json:"custom_oauth,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
@@ -42,10 +42,10 @@ func (*Setting) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case setting.FieldEnableSSO, setting.FieldForceTwoFactorAuth, setting.FieldDisablePasswordLogin, setting.FieldEnableDingtalkOauth:
+		case setting.FieldDingtalkOauth, setting.FieldCustomOauth:
+			values[i] = new([]byte)
+		case setting.FieldEnableSSO, setting.FieldForceTwoFactorAuth, setting.FieldDisablePasswordLogin:
 			values[i] = new(sql.NullBool)
-		case setting.FieldDingtalkClientID, setting.FieldDingtalkClientSecret:
-			values[i] = new(sql.NullString)
 		case setting.FieldCreatedAt, setting.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
 		case setting.FieldID:
@@ -89,23 +89,21 @@ func (s *Setting) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				s.DisablePasswordLogin = value.Bool
 			}
-		case setting.FieldEnableDingtalkOauth:
-			if value, ok := values[i].(*sql.NullBool); !ok {
-				return fmt.Errorf("unexpected type %T for field enable_dingtalk_oauth", values[i])
-			} else if value.Valid {
-				s.EnableDingtalkOauth = value.Bool
+		case setting.FieldDingtalkOauth:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field dingtalk_oauth", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &s.DingtalkOauth); err != nil {
+					return fmt.Errorf("unmarshal field dingtalk_oauth: %w", err)
+				}
 			}
-		case setting.FieldDingtalkClientID:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field dingtalk_client_id", values[i])
-			} else if value.Valid {
-				s.DingtalkClientID = value.String
-			}
-		case setting.FieldDingtalkClientSecret:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field dingtalk_client_secret", values[i])
-			} else if value.Valid {
-				s.DingtalkClientSecret = value.String
+		case setting.FieldCustomOauth:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field custom_oauth", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &s.CustomOauth); err != nil {
+					return fmt.Errorf("unmarshal field custom_oauth: %w", err)
+				}
 			}
 		case setting.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -164,14 +162,11 @@ func (s *Setting) String() string {
 	builder.WriteString("disable_password_login=")
 	builder.WriteString(fmt.Sprintf("%v", s.DisablePasswordLogin))
 	builder.WriteString(", ")
-	builder.WriteString("enable_dingtalk_oauth=")
-	builder.WriteString(fmt.Sprintf("%v", s.EnableDingtalkOauth))
+	builder.WriteString("dingtalk_oauth=")
+	builder.WriteString(fmt.Sprintf("%v", s.DingtalkOauth))
 	builder.WriteString(", ")
-	builder.WriteString("dingtalk_client_id=")
-	builder.WriteString(s.DingtalkClientID)
-	builder.WriteString(", ")
-	builder.WriteString("dingtalk_client_secret=")
-	builder.WriteString(s.DingtalkClientSecret)
+	builder.WriteString("custom_oauth=")
+	builder.WriteString(fmt.Sprintf("%v", s.CustomOauth))
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(s.CreatedAt.Format(time.ANSIC))

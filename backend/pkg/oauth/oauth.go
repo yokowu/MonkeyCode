@@ -11,6 +11,8 @@ func NewOAuther(config domain.OAuthConfig) (domain.OAuther, error) {
 	switch config.Platform {
 	case consts.UserPlatformDingTalk:
 		return NewDingTalk(config), nil
+	case consts.UserPlatformCustom:
+		return NewCustomOAuth(config), nil
 	default:
 		return nil, fmt.Errorf("unsupported platform: %s", config.Platform)
 	}

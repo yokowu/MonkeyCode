@@ -15,3 +15,15 @@ other = "邮箱格式错误"
 
 [err-oauth-state-invalid]
 other = "OAuth 状态无效"
+
+[err-unsupported-platform]
+other = "不支持的平台"
+
+[err-not-invited]
+other = "未被邀请"
+
+[err-dingtalk-not-enabled]
+other = "钉钉未启用"
+
+[err-custom-not-enabled]
+other = "OAuth未启用"

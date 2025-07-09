@@ -9,6 +9,8 @@ import (
 	"entgo.io/ent/schema/field"
 
 	"github.com/google/uuid"
+
+	"github.com/chaitin/MonkeyCode/backend/ent/types"
 )
 
 // Setting holds the schema definition for the Setting entity.
@@ -31,9 +33,8 @@ func (Setting) Fields() []ent.Field {
 		field.Bool("enable_sso").Default(false),
 		field.Bool("force_two_factor_auth").Default(false),
 		field.Bool("disable_password_login").Default(false),
-		field.Bool("enable_dingtalk_oauth").Default(false),
-		field.String("dingtalk_client_id").Optional(),
-		field.String("dingtalk_client_secret").Optional(),
+		field.JSON("dingtalk_oauth", &types.DingtalkOAuth{}).Optional(),
+		field.JSON("custom_oauth", &types.CustomOAuth{}).Optional(),
 		field.Time("created_at").Default(time.Now),
 		field.Time("updated_at").Default(time.Now).UpdateDefault(time.Now),
 	}

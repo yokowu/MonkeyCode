@@ -19,12 +19,10 @@ const (
 	FieldForceTwoFactorAuth = "force_two_factor_auth"
 	// FieldDisablePasswordLogin holds the string denoting the disable_password_login field in the database.
 	FieldDisablePasswordLogin = "disable_password_login"
-	// FieldEnableDingtalkOauth holds the string denoting the enable_dingtalk_oauth field in the database.
-	FieldEnableDingtalkOauth = "enable_dingtalk_oauth"
-	// FieldDingtalkClientID holds the string denoting the dingtalk_client_id field in the database.
-	FieldDingtalkClientID = "dingtalk_client_id"
-	// FieldDingtalkClientSecret holds the string denoting the dingtalk_client_secret field in the database.
-	FieldDingtalkClientSecret = "dingtalk_client_secret"
+	// FieldDingtalkOauth holds the string denoting the dingtalk_oauth field in the database.
+	FieldDingtalkOauth = "dingtalk_oauth"
+	// FieldCustomOauth holds the string denoting the custom_oauth field in the database.
+	FieldCustomOauth = "custom_oauth"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
@@ -39,9 +37,8 @@ var Columns = []string{
 	FieldEnableSSO,
 	FieldForceTwoFactorAuth,
 	FieldDisablePasswordLogin,
-	FieldEnableDingtalkOauth,
-	FieldDingtalkClientID,
-	FieldDingtalkClientSecret,
+	FieldDingtalkOauth,
+	FieldCustomOauth,
 	FieldCreatedAt,
 	FieldUpdatedAt,
 }
@@ -63,8 +60,6 @@ var (
 	DefaultForceTwoFactorAuth bool
 	// DefaultDisablePasswordLogin holds the default value on creation for the "disable_password_login" field.
 	DefaultDisablePasswordLogin bool
-	// DefaultEnableDingtalkOauth holds the default value on creation for the "enable_dingtalk_oauth" field.
-	DefaultEnableDingtalkOauth bool
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
@@ -94,21 +89,6 @@ func ByForceTwoFactorAuth(opts ...sql.OrderTermOption) OrderOption {
 // ByDisablePasswordLogin orders the results by the disable_password_login field.
 func ByDisablePasswordLogin(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDisablePasswordLogin, opts...).ToFunc()
-}
-
-// ByEnableDingtalkOauth orders the results by the enable_dingtalk_oauth field.
-func ByEnableDingtalkOauth(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldEnableDingtalkOauth, opts...).ToFunc()
-}
-
-// ByDingtalkClientID orders the results by the dingtalk_client_id field.
-func ByDingtalkClientID(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldDingtalkClientID, opts...).ToFunc()
-}
-
-// ByDingtalkClientSecret orders the results by the dingtalk_client_secret field.
-func ByDingtalkClientSecret(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldDingtalkClientSecret, opts...).ToFunc()
 }
 
 // ByCreatedAt orders the results by the created_at field.

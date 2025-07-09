@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/chaitin/MonkeyCode/backend/db/predicate"
 	"github.com/chaitin/MonkeyCode/backend/db/setting"
+	"github.com/chaitin/MonkeyCode/backend/ent/types"
 )
 
 // SettingUpdate is the builder for updating Setting entities.
@@ -71,57 +72,27 @@ func (su *SettingUpdate) SetNillableDisablePasswordLogin(b *bool) *SettingUpdate
 	return su
 }
 
-// SetEnableDingtalkOauth sets the "enable_dingtalk_oauth" field.
-func (su *SettingUpdate) SetEnableDingtalkOauth(b bool) *SettingUpdate {
-	su.mutation.SetEnableDingtalkOauth(b)
+// SetDingtalkOauth sets the "dingtalk_oauth" field.
+func (su *SettingUpdate) SetDingtalkOauth(to *types.DingtalkOAuth) *SettingUpdate {
+	su.mutation.SetDingtalkOauth(to)
 	return su
 }
 
-// SetNillableEnableDingtalkOauth sets the "enable_dingtalk_oauth" field if the given value is not nil.
-func (su *SettingUpdate) SetNillableEnableDingtalkOauth(b *bool) *SettingUpdate {
-	if b != nil {
-		su.SetEnableDingtalkOauth(*b)
-	}
+// ClearDingtalkOauth clears the value of the "dingtalk_oauth" field.
+func (su *SettingUpdate) ClearDingtalkOauth() *SettingUpdate {
+	su.mutation.ClearDingtalkOauth()
 	return su
 }
 
-// SetDingtalkClientID sets the "dingtalk_client_id" field.
-func (su *SettingUpdate) SetDingtalkClientID(s string) *SettingUpdate {
-	su.mutation.SetDingtalkClientID(s)
+// SetCustomOauth sets the "custom_oauth" field.
+func (su *SettingUpdate) SetCustomOauth(to *types.CustomOAuth) *SettingUpdate {
+	su.mutation.SetCustomOauth(to)
 	return su
 }
 
-// SetNillableDingtalkClientID sets the "dingtalk_client_id" field if the given value is not nil.
-func (su *SettingUpdate) SetNillableDingtalkClientID(s *string) *SettingUpdate {
-	if s != nil {
-		su.SetDingtalkClientID(*s)
-	}
-	return su
-}
-
-// ClearDingtalkClientID clears the value of the "dingtalk_client_id" field.
-func (su *SettingUpdate) ClearDingtalkClientID() *SettingUpdate {
-	su.mutation.ClearDingtalkClientID()
-	return su
-}
-
-// SetDingtalkClientSecret sets the "dingtalk_client_secret" field.
-func (su *SettingUpdate) SetDingtalkClientSecret(s string) *SettingUpdate {
-	su.mutation.SetDingtalkClientSecret(s)
-	return su
-}
-
-// SetNillableDingtalkClientSecret sets the "dingtalk_client_secret" field if the given value is not nil.
-func (su *SettingUpdate) SetNillableDingtalkClientSecret(s *string) *SettingUpdate {
-	if s != nil {
-		su.SetDingtalkClientSecret(*s)
-	}
-	return su
-}
-
-// ClearDingtalkClientSecret clears the value of the "dingtalk_client_secret" field.
-func (su *SettingUpdate) ClearDingtalkClientSecret() *SettingUpdate {
-	su.mutation.ClearDingtalkClientSecret()
+// ClearCustomOauth clears the value of the "custom_oauth" field.
+func (su *SettingUpdate) ClearCustomOauth() *SettingUpdate {
+	su.mutation.ClearCustomOauth()
 	return su
 }
 
@@ -210,20 +181,17 @@ func (su *SettingUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := su.mutation.DisablePasswordLogin(); ok {
 		_spec.SetField(setting.FieldDisablePasswordLogin, field.TypeBool, value)
 	}
-	if value, ok := su.mutation.EnableDingtalkOauth(); ok {
-		_spec.SetField(setting.FieldEnableDingtalkOauth, field.TypeBool, value)
+	if value, ok := su.mutation.DingtalkOauth(); ok {
+		_spec.SetField(setting.FieldDingtalkOauth, field.TypeJSON, value)
 	}
-	if value, ok := su.mutation.DingtalkClientID(); ok {
-		_spec.SetField(setting.FieldDingtalkClientID, field.TypeString, value)
+	if su.mutation.DingtalkOauthCleared() {
+		_spec.ClearField(setting.FieldDingtalkOauth, field.TypeJSON)
 	}
-	if su.mutation.DingtalkClientIDCleared() {
-		_spec.ClearField(setting.FieldDingtalkClientID, field.TypeString)
+	if value, ok := su.mutation.CustomOauth(); ok {
+		_spec.SetField(setting.FieldCustomOauth, field.TypeJSON, value)
 	}
-	if value, ok := su.mutation.DingtalkClientSecret(); ok {
-		_spec.SetField(setting.FieldDingtalkClientSecret, field.TypeString, value)
-	}
-	if su.mutation.DingtalkClientSecretCleared() {
-		_spec.ClearField(setting.FieldDingtalkClientSecret, field.TypeString)
+	if su.mutation.CustomOauthCleared() {
+		_spec.ClearField(setting.FieldCustomOauth, field.TypeJSON)
 	}
 	if value, ok := su.mutation.CreatedAt(); ok {
 		_spec.SetField(setting.FieldCreatedAt, field.TypeTime, value)
@@ -295,57 +263,27 @@ func (suo *SettingUpdateOne) SetNillableDisablePasswordLogin(b *bool) *SettingUp
 	return suo
 }
 
-// SetEnableDingtalkOauth sets the "enable_dingtalk_oauth" field.
-func (suo *SettingUpdateOne) SetEnableDingtalkOauth(b bool) *SettingUpdateOne {
-	suo.mutation.SetEnableDingtalkOauth(b)
+// SetDingtalkOauth sets the "dingtalk_oauth" field.
+func (suo *SettingUpdateOne) SetDingtalkOauth(to *types.DingtalkOAuth) *SettingUpdateOne {
+	suo.mutation.SetDingtalkOauth(to)
 	return suo
 }
 
-// SetNillableEnableDingtalkOauth sets the "enable_dingtalk_oauth" field if the given value is not nil.
-func (suo *SettingUpdateOne) SetNillableEnableDingtalkOauth(b *bool) *SettingUpdateOne {
-	if b != nil {
-		suo.SetEnableDingtalkOauth(*b)
-	}
+// ClearDingtalkOauth clears the value of the "dingtalk_oauth" field.
+func (suo *SettingUpdateOne) ClearDingtalkOauth() *SettingUpdateOne {
+	suo.mutation.ClearDingtalkOauth()
 	return suo
 }
 
-// SetDingtalkClientID sets the "dingtalk_client_id" field.
-func (suo *SettingUpdateOne) SetDingtalkClientID(s string) *SettingUpdateOne {
-	suo.mutation.SetDingtalkClientID(s)
+// SetCustomOauth sets the "custom_oauth" field.
+func (suo *SettingUpdateOne) SetCustomOauth(to *types.CustomOAuth) *SettingUpdateOne {
+	suo.mutation.SetCustomOauth(to)
 	return suo
 }
 
-// SetNillableDingtalkClientID sets the "dingtalk_client_id" field if the given value is not nil.
-func (suo *SettingUpdateOne) SetNillableDingtalkClientID(s *string) *SettingUpdateOne {
-	if s != nil {
-		suo.SetDingtalkClientID(*s)
-	}
-	return suo
-}
-
-// ClearDingtalkClientID clears the value of the "dingtalk_client_id" field.
-func (suo *SettingUpdateOne) ClearDingtalkClientID() *SettingUpdateOne {
-	suo.mutation.ClearDingtalkClientID()
-	return suo
-}
-
-// SetDingtalkClientSecret sets the "dingtalk_client_secret" field.
-func (suo *SettingUpdateOne) SetDingtalkClientSecret(s string) *SettingUpdateOne {
-	suo.mutation.SetDingtalkClientSecret(s)
-	return suo
-}
-
-// SetNillableDingtalkClientSecret sets the "dingtalk_client_secret" field if the given value is not nil.
-func (suo *SettingUpdateOne) SetNillableDingtalkClientSecret(s *string) *SettingUpdateOne {
-	if s != nil {
-		suo.SetDingtalkClientSecret(*s)
-	}
-	return suo
-}
-
-// ClearDingtalkClientSecret clears the value of the "dingtalk_client_secret" field.
-func (suo *SettingUpdateOne) ClearDingtalkClientSecret() *SettingUpdateOne {
-	suo.mutation.ClearDingtalkClientSecret()
+// ClearCustomOauth clears the value of the "custom_oauth" field.
+func (suo *SettingUpdateOne) ClearCustomOauth() *SettingUpdateOne {
+	suo.mutation.ClearCustomOauth()
 	return suo
 }
 
@@ -464,20 +402,17 @@ func (suo *SettingUpdateOne) sqlSave(ctx context.Context) (_node *Setting, err e
 	if value, ok := suo.mutation.DisablePasswordLogin(); ok {
 		_spec.SetField(setting.FieldDisablePasswordLogin, field.TypeBool, value)
 	}
-	if value, ok := suo.mutation.EnableDingtalkOauth(); ok {
-		_spec.SetField(setting.FieldEnableDingtalkOauth, field.TypeBool, value)
+	if value, ok := suo.mutation.DingtalkOauth(); ok {
+		_spec.SetField(setting.FieldDingtalkOauth, field.TypeJSON, value)
 	}
-	if value, ok := suo.mutation.DingtalkClientID(); ok {
-		_spec.SetField(setting.FieldDingtalkClientID, field.TypeString, value)
+	if suo.mutation.DingtalkOauthCleared() {
+		_spec.ClearField(setting.FieldDingtalkOauth, field.TypeJSON)
 	}
-	if suo.mutation.DingtalkClientIDCleared() {
-		_spec.ClearField(setting.FieldDingtalkClientID, field.TypeString)
+	if value, ok := suo.mutation.CustomOauth(); ok {
+		_spec.SetField(setting.FieldCustomOauth, field.TypeJSON, value)
 	}
-	if value, ok := suo.mutation.DingtalkClientSecret(); ok {
-		_spec.SetField(setting.FieldDingtalkClientSecret, field.TypeString, value)
-	}
-	if suo.mutation.DingtalkClientSecretCleared() {
-		_spec.ClearField(setting.FieldDingtalkClientSecret, field.TypeString)
+	if suo.mutation.CustomOauthCleared() {
+		_spec.ClearField(setting.FieldCustomOauth, field.TypeJSON)
 	}
 	if value, ok := suo.mutation.CreatedAt(); ok {
 		_spec.SetField(setting.FieldCreatedAt, field.TypeTime, value)

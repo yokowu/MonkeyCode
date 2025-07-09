@@ -1,0 +1,20 @@
+package types
+
+type DingtalkOAuth struct {
+	Enable       bool   `json:"enable"`        // 钉钉OAuth开关
+	ClientID     string `json:"client_id"`     // 钉钉客户端ID
+	ClientSecret string `json:"client_secret"` // 钉钉客户端密钥
+}
+
+type CustomOAuth struct {
+	Enable         bool     `json:"enable"`           // 自定义OAuth开关
+	ClientID       string   `json:"client_id"`        // 自定义客户端ID
+	ClientSecret   string   `json:"client_secret"`    // 自定义客户端密钥
+	AuthorizeURL   string   `json:"authorize_url"`    // 自定义OAuth授权URL
+	AccessTokenURL string   `json:"access_token_url"` // 自定义OAuth访问令牌URL
+	UserInfoURL    string   `json:"userinfo_url"`     // 自定义OAuth用户信息URL
+	Scopes         []string `json:"scopes"`           // 自定义OAuth Scope列表
+	IDField        string   `json:"id_field"`         // 用户信息回包中的ID字段名
+	NameField      string   `json:"name_field"`       // 用户信息回包中的用户名字段名`
+	AvatarField    string   `json:"avatar_field"`     // 用户信息回包中的头像URL字段名`
+}

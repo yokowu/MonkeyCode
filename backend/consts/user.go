@@ -21,12 +21,14 @@ type UserPlatform string
 const (
 	UserPlatformEmail    UserPlatform = "email"
 	UserPlatformDingTalk UserPlatform = "dingtalk"
+	UserPlatformCustom   UserPlatform = "custom"
 )
 
 type OAuthKind string
 
 const (
-	OAuthKindSignUpOrIn OAuthKind = "signup_or_in"
+	OAuthKindInvite OAuthKind = "invite"
+	OAuthKindLogin  OAuthKind = "login"
 )
 
 type InviteCodeStatus string

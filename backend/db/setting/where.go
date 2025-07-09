@@ -70,21 +70,6 @@ func DisablePasswordLogin(v bool) predicate.Setting {
 	return predicate.Setting(sql.FieldEQ(FieldDisablePasswordLogin, v))
 }
 
-// EnableDingtalkOauth applies equality check predicate on the "enable_dingtalk_oauth" field. It's identical to EnableDingtalkOauthEQ.
-func EnableDingtalkOauth(v bool) predicate.Setting {
-	return predicate.Setting(sql.FieldEQ(FieldEnableDingtalkOauth, v))
-}
-
-// DingtalkClientID applies equality check predicate on the "dingtalk_client_id" field. It's identical to DingtalkClientIDEQ.
-func DingtalkClientID(v string) predicate.Setting {
-	return predicate.Setting(sql.FieldEQ(FieldDingtalkClientID, v))
-}
-
-// DingtalkClientSecret applies equality check predicate on the "dingtalk_client_secret" field. It's identical to DingtalkClientSecretEQ.
-func DingtalkClientSecret(v string) predicate.Setting {
-	return predicate.Setting(sql.FieldEQ(FieldDingtalkClientSecret, v))
-}
-
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
 func CreatedAt(v time.Time) predicate.Setting {
 	return predicate.Setting(sql.FieldEQ(FieldCreatedAt, v))
@@ -125,164 +110,24 @@ func DisablePasswordLoginNEQ(v bool) predicate.Setting {
 	return predicate.Setting(sql.FieldNEQ(FieldDisablePasswordLogin, v))
 }
 
-// EnableDingtalkOauthEQ applies the EQ predicate on the "enable_dingtalk_oauth" field.
-func EnableDingtalkOauthEQ(v bool) predicate.Setting {
-	return predicate.Setting(sql.FieldEQ(FieldEnableDingtalkOauth, v))
+// DingtalkOauthIsNil applies the IsNil predicate on the "dingtalk_oauth" field.
+func DingtalkOauthIsNil() predicate.Setting {
+	return predicate.Setting(sql.FieldIsNull(FieldDingtalkOauth))
 }
 
-// EnableDingtalkOauthNEQ applies the NEQ predicate on the "enable_dingtalk_oauth" field.
-func EnableDingtalkOauthNEQ(v bool) predicate.Setting {
-	return predicate.Setting(sql.FieldNEQ(FieldEnableDingtalkOauth, v))
+// DingtalkOauthNotNil applies the NotNil predicate on the "dingtalk_oauth" field.
+func DingtalkOauthNotNil() predicate.Setting {
+	return predicate.Setting(sql.FieldNotNull(FieldDingtalkOauth))
 }
 
-// DingtalkClientIDEQ applies the EQ predicate on the "dingtalk_client_id" field.
-func DingtalkClientIDEQ(v string) predicate.Setting {
-	return predicate.Setting(sql.FieldEQ(FieldDingtalkClientID, v))
+// CustomOauthIsNil applies the IsNil predicate on the "custom_oauth" field.
+func CustomOauthIsNil() predicate.Setting {
+	return predicate.Setting(sql.FieldIsNull(FieldCustomOauth))
 }
 
-// DingtalkClientIDNEQ applies the NEQ predicate on the "dingtalk_client_id" field.
-func DingtalkClientIDNEQ(v string) predicate.Setting {
-	return predicate.Setting(sql.FieldNEQ(FieldDingtalkClientID, v))
-}
-
-// DingtalkClientIDIn applies the In predicate on the "dingtalk_client_id" field.
-func DingtalkClientIDIn(vs ...string) predicate.Setting {
-	return predicate.Setting(sql.FieldIn(FieldDingtalkClientID, vs...))
-}
-
-// DingtalkClientIDNotIn applies the NotIn predicate on the "dingtalk_client_id" field.
-func DingtalkClientIDNotIn(vs ...string) predicate.Setting {
-	return predicate.Setting(sql.FieldNotIn(FieldDingtalkClientID, vs...))
-}
-
-// DingtalkClientIDGT applies the GT predicate on the "dingtalk_client_id" field.
-func DingtalkClientIDGT(v string) predicate.Setting {
-	return predicate.Setting(sql.FieldGT(FieldDingtalkClientID, v))
-}
-
-// DingtalkClientIDGTE applies the GTE predicate on the "dingtalk_client_id" field.
-func DingtalkClientIDGTE(v string) predicate.Setting {
-	return predicate.Setting(sql.FieldGTE(FieldDingtalkClientID, v))
-}
-
-// DingtalkClientIDLT applies the LT predicate on the "dingtalk_client_id" field.
-func DingtalkClientIDLT(v string) predicate.Setting {
-	return predicate.Setting(sql.FieldLT(FieldDingtalkClientID, v))
-}
-
-// DingtalkClientIDLTE applies the LTE predicate on the "dingtalk_client_id" field.
-func DingtalkClientIDLTE(v string) predicate.Setting {
-	return predicate.Setting(sql.FieldLTE(FieldDingtalkClientID, v))
-}
-
-// DingtalkClientIDContains applies the Contains predicate on the "dingtalk_client_id" field.
-func DingtalkClientIDContains(v string) predicate.Setting {
-	return predicate.Setting(sql.FieldContains(FieldDingtalkClientID, v))
-}
-
-// DingtalkClientIDHasPrefix applies the HasPrefix predicate on the "dingtalk_client_id" field.
-func DingtalkClientIDHasPrefix(v string) predicate.Setting {
-	return predicate.Setting(sql.FieldHasPrefix(FieldDingtalkClientID, v))
-}
-
-// DingtalkClientIDHasSuffix applies the HasSuffix predicate on the "dingtalk_client_id" field.
-func DingtalkClientIDHasSuffix(v string) predicate.Setting {
-	return predicate.Setting(sql.FieldHasSuffix(FieldDingtalkClientID, v))
-}
-
-// DingtalkClientIDIsNil applies the IsNil predicate on the "dingtalk_client_id" field.
-func DingtalkClientIDIsNil() predicate.Setting {
-	return predicate.Setting(sql.FieldIsNull(FieldDingtalkClientID))
-}
-
-// DingtalkClientIDNotNil applies the NotNil predicate on the "dingtalk_client_id" field.
-func DingtalkClientIDNotNil() predicate.Setting {
-	return predicate.Setting(sql.FieldNotNull(FieldDingtalkClientID))
-}
-
-// DingtalkClientIDEqualFold applies the EqualFold predicate on the "dingtalk_client_id" field.
-func DingtalkClientIDEqualFold(v string) predicate.Setting {
-	return predicate.Setting(sql.FieldEqualFold(FieldDingtalkClientID, v))
-}
-
-// DingtalkClientIDContainsFold applies the ContainsFold predicate on the "dingtalk_client_id" field.
-func DingtalkClientIDContainsFold(v string) predicate.Setting {
-	return predicate.Setting(sql.FieldContainsFold(FieldDingtalkClientID, v))
-}
-
-// DingtalkClientSecretEQ applies the EQ predicate on the "dingtalk_client_secret" field.
-func DingtalkClientSecretEQ(v string) predicate.Setting {
-	return predicate.Setting(sql.FieldEQ(FieldDingtalkClientSecret, v))
-}
-
-// DingtalkClientSecretNEQ applies the NEQ predicate on the "dingtalk_client_secret" field.
-func DingtalkClientSecretNEQ(v string) predicate.Setting {
-	return predicate.Setting(sql.FieldNEQ(FieldDingtalkClientSecret, v))
-}
-
-// DingtalkClientSecretIn applies the In predicate on the "dingtalk_client_secret" field.
-func DingtalkClientSecretIn(vs ...string) predicate.Setting {
-	return predicate.Setting(sql.FieldIn(FieldDingtalkClientSecret, vs...))
-}
-
-// DingtalkClientSecretNotIn applies the NotIn predicate on the "dingtalk_client_secret" field.
-func DingtalkClientSecretNotIn(vs ...string) predicate.Setting {
-	return predicate.Setting(sql.FieldNotIn(FieldDingtalkClientSecret, vs...))
-}
-
-// DingtalkClientSecretGT applies the GT predicate on the "dingtalk_client_secret" field.
-func DingtalkClientSecretGT(v string) predicate.Setting {
-	return predicate.Setting(sql.FieldGT(FieldDingtalkClientSecret, v))
-}
-
-// DingtalkClientSecretGTE applies the GTE predicate on the "dingtalk_client_secret" field.
-func DingtalkClientSecretGTE(v string) predicate.Setting {
-	return predicate.Setting(sql.FieldGTE(FieldDingtalkClientSecret, v))
-}
-
-// DingtalkClientSecretLT applies the LT predicate on the "dingtalk_client_secret" field.
-func DingtalkClientSecretLT(v string) predicate.Setting {
-	return predicate.Setting(sql.FieldLT(FieldDingtalkClientSecret, v))
-}
-
-// DingtalkClientSecretLTE applies the LTE predicate on the "dingtalk_client_secret" field.
-func DingtalkClientSecretLTE(v string) predicate.Setting {
-	return predicate.Setting(sql.FieldLTE(FieldDingtalkClientSecret, v))
-}
-
-// DingtalkClientSecretContains applies the Contains predicate on the "dingtalk_client_secret" field.
-func DingtalkClientSecretContains(v string) predicate.Setting {
-	return predicate.Setting(sql.FieldContains(FieldDingtalkClientSecret, v))
-}
-
-// DingtalkClientSecretHasPrefix applies the HasPrefix predicate on the "dingtalk_client_secret" field.
-func DingtalkClientSecretHasPrefix(v string) predicate.Setting {
-	return predicate.Setting(sql.FieldHasPrefix(FieldDingtalkClientSecret, v))
-}
-
-// DingtalkClientSecretHasSuffix applies the HasSuffix predicate on the "dingtalk_client_secret" field.
-func DingtalkClientSecretHasSuffix(v string) predicate.Setting {
-	return predicate.Setting(sql.FieldHasSuffix(FieldDingtalkClientSecret, v))
-}
-
-// DingtalkClientSecretIsNil applies the IsNil predicate on the "dingtalk_client_secret" field.
-func DingtalkClientSecretIsNil() predicate.Setting {
-	return predicate.Setting(sql.FieldIsNull(FieldDingtalkClientSecret))
-}
-
-// DingtalkClientSecretNotNil applies the NotNil predicate on the "dingtalk_client_secret" field.
-func DingtalkClientSecretNotNil() predicate.Setting {
-	return predicate.Setting(sql.FieldNotNull(FieldDingtalkClientSecret))
-}
-
-// DingtalkClientSecretEqualFold applies the EqualFold predicate on the "dingtalk_client_secret" field.
-func DingtalkClientSecretEqualFold(v string) predicate.Setting {
-	return predicate.Setting(sql.FieldEqualFold(FieldDingtalkClientSecret, v))
-}
-
-// DingtalkClientSecretContainsFold applies the ContainsFold predicate on the "dingtalk_client_secret" field.
-func DingtalkClientSecretContainsFold(v string) predicate.Setting {
-	return predicate.Setting(sql.FieldContainsFold(FieldDingtalkClientSecret, v))
+// CustomOauthNotNil applies the NotNil predicate on the "custom_oauth" field.
+func CustomOauthNotNil() predicate.Setting {
+	return predicate.Setting(sql.FieldNotNull(FieldCustomOauth))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.

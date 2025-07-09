@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/GoYoko/web"
 	"github.com/chaitin/MonkeyCode/backend/consts"
+	"github.com/chaitin/MonkeyCode/backend/ent/types"
 	"github.com/chaitin/MonkeyCode/backend/pkg/cvt"
 	"github.com/chaitin/MonkeyCode/backend/pkg/oauth"
 
@@ -278,14 +280,26 @@ func (u *UserUsecase) UpdateSetting(ctx context.Context, req *domain.UpdateSetti
 		if req.DisablePasswordLogin != nil {
 			s.SetDisablePasswordLogin(*req.DisablePasswordLogin)
 		}
-		if req.EnableDingtalkOAuth != nil {
-			s.SetEnableDingtalkOauth(*req.EnableDingtalkOAuth)
+		if req.DingtalkOAuth != nil {
+			s.SetDingtalkOauth(&types.DingtalkOAuth{
+				Enable:       req.DingtalkOAuth.Enable,
+				ClientID:     req.DingtalkOAuth.ClientID,
+				ClientSecret: req.DingtalkOAuth.ClientSecret,
+			})
 		}
-		if req.DingtalkClientID != nil {
-			s.SetDingtalkClientID(*req.DingtalkClientID)
-		}
-		if req.DingtalkClientSecret != nil {
-			s.SetDingtalkClientSecret(*req.DingtalkClientSecret)
+		if req.CustomOAuth != nil {
+			s.SetCustomOauth(&types.CustomOAuth{
+				Enable:         req.CustomOAuth.Enable,
+				ClientID:       req.CustomOAuth.ClientID,
+				ClientSecret:   req.CustomOAuth.ClientSecret,
+				AuthorizeURL:   req.CustomOAuth.AuthorizeURL,
+				AccessTokenURL: req.CustomOAuth.AccessTokenURL,
+				UserInfoURL:    req.CustomOAuth.UserInfoURL,
+				Scopes:         req.CustomOAuth.Scopes,
+				IDField:        req.CustomOAuth.IDField,
+				NameField:      req.CustomOAuth.NameField,
+				AvatarField:    req.CustomOAuth.AvatarField,
+			})
 		}
 	})
 	if err != nil {
@@ -335,8 +349,26 @@ func (u *UserUsecase) OAuthSignUpOrIn(ctx context.Context, req *domain.OAuthSign
 
 	switch req.Platform {
 	case consts.UserPlatformDingTalk:
-		cfg.ClientID = setting.DingtalkClientID
-		cfg.ClientSecret = setting.DingtalkClientSecret
+		if setting.DingtalkOauth == nil || !setting.DingtalkOauth.Enable {
+			return nil, errcode.ErrDingtalkNotEnabled
+		}
+		cfg.ClientID = setting.DingtalkOauth.ClientID
+		cfg.ClientSecret = setting.DingtalkOauth.ClientSecret
+	case consts.UserPlatformCustom:
+		if setting.CustomOauth == nil || !setting.CustomOauth.Enable {
+			return nil, errcode.ErrCustomNotEnabled
+		}
+		cfg.ClientID = setting.CustomOauth.ClientID
+		cfg.ClientSecret = setting.CustomOauth.ClientSecret
+		cfg.AuthorizeURL = setting.CustomOauth.AuthorizeURL
+		cfg.Scope = strings.Join(setting.CustomOauth.Scopes, " ")
+		cfg.TokenURL = setting.CustomOauth.AccessTokenURL
+		cfg.UserInfoURL = setting.CustomOauth.UserInfoURL
+		cfg.IDField = setting.CustomOauth.IDField
+		cfg.NameField = setting.CustomOauth.NameField
+		cfg.AvatarField = setting.CustomOauth.AvatarField
+	default:
+		return nil, errcode.ErrUnsupportedPlatform
 	}
 
 	oauth, err := oauth.NewOAuther(cfg)
@@ -347,9 +379,10 @@ func (u *UserUsecase) OAuthSignUpOrIn(ctx context.Context, req *domain.OAuthSign
 
 	session := &domain.OAuthState{
 		SessionID:   req.SessionID,
-		Kind:        consts.OAuthKindSignUpOrIn,
+		Kind:        req.OAuthKind(),
 		Platform:    req.Platform,
 		RedirectURL: req.RedirectURL,
+		InviteCode:  req.InviteCode,
 	}
 	b, err := json.Marshal(session)
 	if err != nil {
@@ -375,38 +408,74 @@ func (u *UserUsecase) OAuthCallback(ctx context.Context, req *domain.OAuthCallba
 	}
 
 	switch session.Kind {
-	case consts.OAuthKindSignUpOrIn:
-		return u.OAuthSignUpOrInCallback(ctx, req, &session)
+	case consts.OAuthKindInvite:
+		return u.WithOAuthCallback(ctx, req, &session, func(ctx context.Context, s *domain.OAuthState, oui *domain.OAuthUserInfo) (*db.User, error) {
+			return u.repo.OAuthRegister(ctx, s.Platform, s.InviteCode, oui)
+		})
+
+	case consts.OAuthKindLogin:
+		return u.WithOAuthCallback(ctx, req, &session, func(ctx context.Context, s *domain.OAuthState, oui *domain.OAuthUserInfo) (*db.User, error) {
+			return u.repo.OAuthLogin(ctx, s.Platform, oui)
+		})
 	default:
 		return "", errcode.ErrOAuthStateInvalid
 	}
 }
 
-func (u *UserUsecase) OAuthSignUpOrInCallback(ctx context.Context, req *domain.OAuthCallbackReq, session *domain.OAuthState) (string, error) {
+func (u *UserUsecase) FetchUserInfo(ctx context.Context, req *domain.OAuthCallbackReq, session *domain.OAuthState) (*domain.OAuthUserInfo, error) {
 	setting, err := u.repo.GetSetting(ctx)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	cfg := domain.OAuthConfig{
 		Debug:    u.cfg.Debug,
 		Platform: session.Platform,
 	}
+
 	switch session.Platform {
 	case consts.UserPlatformDingTalk:
-		cfg.ClientID = setting.DingtalkClientID
-		cfg.ClientSecret = setting.DingtalkClientSecret
+		if setting.DingtalkOauth == nil || !setting.DingtalkOauth.Enable {
+			return nil, errcode.ErrDingtalkNotEnabled
+		}
+		cfg.ClientID = setting.DingtalkOauth.ClientID
+		cfg.ClientSecret = setting.DingtalkOauth.ClientSecret
+	case consts.UserPlatformCustom:
+		if setting.CustomOauth == nil || !setting.CustomOauth.Enable {
+			return nil, errcode.ErrCustomNotEnabled
+		}
+		cfg.ClientID = setting.CustomOauth.ClientID
+		cfg.ClientSecret = setting.CustomOauth.ClientSecret
+		cfg.AuthorizeURL = setting.CustomOauth.AuthorizeURL
+		cfg.Scope = strings.Join(setting.CustomOauth.Scopes, " ")
+		cfg.TokenURL = setting.CustomOauth.AccessTokenURL
+		cfg.UserInfoURL = setting.CustomOauth.UserInfoURL
+		cfg.IDField = setting.CustomOauth.IDField
+		cfg.NameField = setting.CustomOauth.NameField
+		cfg.AvatarField = setting.CustomOauth.AvatarField
+	default:
+		return nil, errcode.ErrUnsupportedPlatform
 	}
 
 	oauth, err := oauth.NewOAuther(cfg)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	userInfo, err := oauth.GetUserInfo(req.Code)
+	if err != nil {
+		return nil, err
+	}
+	return userInfo, nil
+}
+
+type OAuthUserRepoHandle func(context.Context, *domain.OAuthState, *domain.OAuthUserInfo) (*db.User, error)
+
+func (u *UserUsecase) WithOAuthCallback(ctx context.Context, req *domain.OAuthCallbackReq, session *domain.OAuthState, handle OAuthUserRepoHandle) (string, error) {
+	info, err := u.FetchUserInfo(ctx, req, session)
 	if err != nil {
 		return "", err
 	}
 
-	user, err := u.repo.SignUpOrIn(ctx, session.Platform, userInfo)
+	user, err := handle(ctx, session, info)
 	if err != nil {
 		return "", err
 	}

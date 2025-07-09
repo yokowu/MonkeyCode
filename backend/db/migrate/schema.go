@@ -243,9 +243,8 @@ var (
 		{Name: "enable_sso", Type: field.TypeBool, Default: false},
 		{Name: "force_two_factor_auth", Type: field.TypeBool, Default: false},
 		{Name: "disable_password_login", Type: field.TypeBool, Default: false},
-		{Name: "enable_dingtalk_oauth", Type: field.TypeBool, Default: false},
-		{Name: "dingtalk_client_id", Type: field.TypeString, Nullable: true},
-		{Name: "dingtalk_client_secret", Type: field.TypeString, Nullable: true},
+		{Name: "dingtalk_oauth", Type: field.TypeJSON, Nullable: true},
+		{Name: "custom_oauth", Type: field.TypeJSON, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 	}

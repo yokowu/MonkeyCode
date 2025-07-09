@@ -1605,14 +1605,22 @@
                 "operationId": "user-oauth-signup-or-in",
                 "parameters": [
                     {
+                        "type": "string",
+                        "description": "邀请码",
+                        "name": "inviate_code",
+                        "in": "query"
+                    },
+                    {
                         "enum": [
                             "email",
-                            "dingtalk"
+                            "dingtalk",
+                            "custom"
                         ],
                         "type": "string",
                         "x-enum-varnames": [
                             "UserPlatformEmail",
-                            "UserPlatformDingTalk"
+                            "UserPlatformDingTalk",
+                            "UserPlatformCustom"
                         ],
                         "description": "第三方平台 dingtalk",
                         "name": "platform",
@@ -1947,11 +1955,13 @@
             "type": "string",
             "enum": [
                 "email",
-                "dingtalk"
+                "dingtalk",
+                "custom"
             ],
             "x-enum-varnames": [
                 "UserPlatformEmail",
-                "UserPlatformDingTalk"
+                "UserPlatformDingTalk",
+                "UserPlatformCustom"
             ]
         },
         "consts.UserStatus": {
@@ -2286,6 +2296,71 @@
                 "provider": {
                     "description": "提供商",
                     "type": "string"
+                }
+            }
+        },
+        "domain.CustomOAuth": {
+            "type": "object",
+            "properties": {
+                "access_token_url": {
+                    "description": "自定义OAuth访问令牌URL",
+                    "type": "string"
+                },
+                "authorize_url": {
+                    "description": "自定义OAuth授权URL",
+                    "type": "string"
+                },
+                "avatar_field": {
+                    "description": "用户信息回包中的头像URL字段名`",
+                    "type": "string"
+                },
+                "client_id": {
+                    "description": "自定义客户端ID",
+                    "type": "string"
+                },
+                "client_secret": {
+                    "description": "自定义客户端密钥",
+                    "type": "string"
+                },
+                "enable": {
+                    "description": "自定义OAuth开关",
+                    "type": "boolean"
+                },
+                "id_field": {
+                    "description": "用户信息回包中的ID字段名",
+                    "type": "string"
+                },
+                "name_field": {
+                    "description": "用户信息回包中的用户名字段名`",
+                    "type": "string"
+                },
+                "scopes": {
+                    "description": "自定义OAuth Scope列表",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "userinfo_url": {
+                    "description": "自定义OAuth用户信息URL",
+                    "type": "string"
+                }
+            }
+        },
+        "domain.DingtalkOAuth": {
+            "type": "object",
+            "properties": {
+                "client_id": {
+                    "description": "钉钉客户端ID",
+                    "type": "string"
+                },
+                "client_secret": {
+                    "description": "钉钉客户端密钥",
+                    "type": "string"
+                },
+                "enable": {
+                    "description": "钉钉OAuth开关",
+                    "type": "boolean"
                 }
             }
         },
@@ -2695,12 +2770,24 @@
                     "description": "创建时间",
                     "type": "integer"
                 },
+                "custom_oauth": {
+                    "description": "自定义OAuth接入",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/domain.CustomOAuth"
+                        }
+                    ]
+                },
+                "dingtalk_oauth": {
+                    "description": "钉钉OAuth接入",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/domain.DingtalkOAuth"
+                        }
+                    ]
+                },
                 "disable_password_login": {
                     "description": "是否禁用密码登录",
-                    "type": "boolean"
-                },
-                "enable_dingtalk_oauth": {
-                    "description": "是否开启钉钉OAuth",
                     "type": "boolean"
                 },
                 "enable_sso": {
@@ -2893,20 +2980,24 @@
         "domain.UpdateSettingReq": {
             "type": "object",
             "properties": {
-                "dingtalk_client_id": {
-                    "description": "钉钉客户端ID",
-                    "type": "string"
+                "custom_oauth": {
+                    "description": "自定义OAuth配置",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/domain.CustomOAuth"
+                        }
+                    ]
                 },
-                "dingtalk_client_secret": {
-                    "description": "钉钉客户端密钥",
-                    "type": "string"
+                "dingtalk_oauth": {
+                    "description": "钉钉OAuth配置",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/domain.DingtalkOAuth"
+                        }
+                    ]
                 },
                 "disable_password_login": {
                     "description": "是否禁用密码登录",
-                    "type": "boolean"
-                },
-                "enable_dingtalk_oauth": {
-                    "description": "是否开启钉钉OAuth",
                     "type": "boolean"
                 },
                 "enable_sso": {
@@ -2946,6 +3037,10 @@
         "domain.User": {
             "type": "object",
             "properties": {
+                "avatar_url": {
+                    "description": "头像URL",
+                    "type": "string"
+                },
                 "created_at": {
                     "description": "创建时间",
                     "type": "integer"

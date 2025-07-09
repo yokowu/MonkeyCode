@@ -3,6 +3,7 @@ package repo
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -17,6 +18,7 @@ import (
 	"github.com/chaitin/MonkeyCode/backend/db/user"
 	"github.com/chaitin/MonkeyCode/backend/db/useridentity"
 	"github.com/chaitin/MonkeyCode/backend/domain"
+	"github.com/chaitin/MonkeyCode/backend/errcode"
 	"github.com/chaitin/MonkeyCode/backend/pkg/entx"
 )
 
@@ -68,30 +70,38 @@ func (r *UserRepo) GetByName(ctx context.Context, username string) (*db.User, er
 func (r *UserRepo) ValidateInviteCode(ctx context.Context, code string) (*db.InviteCode, error) {
 	var res *db.InviteCode
 	err := entx.WithTx(ctx, r.db, func(tx *db.Tx) error {
-		ic, err := tx.InviteCode.Query().Where(invitecode.Code(code)).Only(ctx)
+		ic, err := r.innerValidateInviteCode(ctx, tx, code)
 		if err != nil {
 			return err
 		}
-
-		if ic.ExpiredAt.Before(time.Now()) {
-			return errors.New("invite code has expired")
-		}
-		if ic.Status == consts.InviteCodeStatusUsed {
-			return errors.New("invite code has been used")
-		}
-
-		ic, err = tx.InviteCode.UpdateOneID(ic.ID).
-			SetStatus(consts.InviteCodeStatusUsed).
-			Save(ctx)
-
-		if err != nil {
-			return err
-		}
-
 		res = ic
 		return nil
 	})
 	return res, err
+}
+
+func (r *UserRepo) innerValidateInviteCode(ctx context.Context, tx *db.Tx, code string) (*db.InviteCode, error) {
+	ic, err := tx.InviteCode.Query().Where(invitecode.Code(code)).Only(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if ic.ExpiredAt.Before(time.Now()) {
+		return nil, errors.New("invite code has expired")
+	}
+	if ic.Status == consts.InviteCodeStatusUsed {
+		return nil, errors.New("invite code has been used")
+	}
+
+	ic, err = tx.InviteCode.UpdateOneID(ic.ID).
+		SetStatus(consts.InviteCodeStatusUsed).
+		Save(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return ic, nil
 }
 
 func (r *UserRepo) CreateUser(ctx context.Context, user *db.User) (*db.User, error) {
@@ -241,16 +251,19 @@ func (r *UserRepo) DeleteAdmin(ctx context.Context, id string) error {
 	return r.db.Admin.DeleteOne(admin).Exec(ctx)
 }
 
-func (r *UserRepo) SignUpOrIn(ctx context.Context, platform consts.UserPlatform, req *domain.OAuthUserInfo) (*db.User, error) {
+func (r *UserRepo) OAuthRegister(ctx context.Context, platform consts.UserPlatform, inviteCode string, req *domain.OAuthUserInfo) (*db.User, error) {
 	var u *db.User
 	err := entx.WithTx(ctx, r.db, func(tx *db.Tx) error {
-		ui, err := tx.UserIdentity.Query().
+		if _, err := r.innerValidateInviteCode(ctx, tx, inviteCode); err != nil {
+			return errcode.ErrInviteCodeInvalid.Wrap(err)
+		}
+
+		_, err := tx.UserIdentity.Query().
 			WithUser().
 			Where(useridentity.Platform(platform), useridentity.IdentityID(req.ID)).
 			First(ctx)
 		if err == nil {
-			u = ui.Edges.User
-			return nil
+			return fmt.Errorf("user already exists for platform %s and identity ID %s", platform, req.ID)
 		}
 		if !db.IsNotFound(err) {
 			return err
@@ -281,4 +294,16 @@ func (r *UserRepo) SignUpOrIn(ctx context.Context, platform consts.UserPlatform,
 		return nil
 	})
 	return u, err
+}
+
+func (r *UserRepo) OAuthLogin(ctx context.Context, platform consts.UserPlatform, req *domain.OAuthUserInfo) (*db.User, error) {
+	ui, err := r.db.UserIdentity.Query().
+		WithUser().
+		Where(useridentity.Platform(platform), useridentity.IdentityID(req.ID)).
+		Where(useridentity.HasUser()).
+		Only(ctx)
+	if err != nil {
+		return nil, errcode.ErrNotInvited.Wrap(err)
+	}
+	return ui.Edges.User, nil
 }

@@ -31,6 +31,7 @@ import (
 	"github.com/chaitin/MonkeyCode/backend/db/user"
 	"github.com/chaitin/MonkeyCode/backend/db/useridentity"
 	"github.com/chaitin/MonkeyCode/backend/db/userloginhistory"
+	"github.com/chaitin/MonkeyCode/backend/ent/types"
 	"github.com/google/uuid"
 )
 
@@ -8816,9 +8817,8 @@ type SettingMutation struct {
 	enable_sso             *bool
 	force_two_factor_auth  *bool
 	disable_password_login *bool
-	enable_dingtalk_oauth  *bool
-	dingtalk_client_id     *string
-	dingtalk_client_secret *string
+	dingtalk_oauth         **types.DingtalkOAuth
+	custom_oauth           **types.CustomOAuth
 	created_at             *time.Time
 	updated_at             *time.Time
 	clearedFields          map[string]struct{}
@@ -9039,138 +9039,102 @@ func (m *SettingMutation) ResetDisablePasswordLogin() {
 	m.disable_password_login = nil
 }
 
-// SetEnableDingtalkOauth sets the "enable_dingtalk_oauth" field.
-func (m *SettingMutation) SetEnableDingtalkOauth(b bool) {
-	m.enable_dingtalk_oauth = &b
+// SetDingtalkOauth sets the "dingtalk_oauth" field.
+func (m *SettingMutation) SetDingtalkOauth(to *types.DingtalkOAuth) {
+	m.dingtalk_oauth = &to
 }
 
-// EnableDingtalkOauth returns the value of the "enable_dingtalk_oauth" field in the mutation.
-func (m *SettingMutation) EnableDingtalkOauth() (r bool, exists bool) {
-	v := m.enable_dingtalk_oauth
+// DingtalkOauth returns the value of the "dingtalk_oauth" field in the mutation.
+func (m *SettingMutation) DingtalkOauth() (r *types.DingtalkOAuth, exists bool) {
+	v := m.dingtalk_oauth
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldEnableDingtalkOauth returns the old "enable_dingtalk_oauth" field's value of the Setting entity.
+// OldDingtalkOauth returns the old "dingtalk_oauth" field's value of the Setting entity.
 // If the Setting object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *SettingMutation) OldEnableDingtalkOauth(ctx context.Context) (v bool, err error) {
+func (m *SettingMutation) OldDingtalkOauth(ctx context.Context) (v *types.DingtalkOAuth, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldEnableDingtalkOauth is only allowed on UpdateOne operations")
+		return v, errors.New("OldDingtalkOauth is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldEnableDingtalkOauth requires an ID field in the mutation")
+		return v, errors.New("OldDingtalkOauth requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldEnableDingtalkOauth: %w", err)
+		return v, fmt.Errorf("querying old value for OldDingtalkOauth: %w", err)
 	}
-	return oldValue.EnableDingtalkOauth, nil
+	return oldValue.DingtalkOauth, nil
 }
 
-// ResetEnableDingtalkOauth resets all changes to the "enable_dingtalk_oauth" field.
-func (m *SettingMutation) ResetEnableDingtalkOauth() {
-	m.enable_dingtalk_oauth = nil
+// ClearDingtalkOauth clears the value of the "dingtalk_oauth" field.
+func (m *SettingMutation) ClearDingtalkOauth() {
+	m.dingtalk_oauth = nil
+	m.clearedFields[setting.FieldDingtalkOauth] = struct{}{}
 }
 
-// SetDingtalkClientID sets the "dingtalk_client_id" field.
-func (m *SettingMutation) SetDingtalkClientID(s string) {
-	m.dingtalk_client_id = &s
-}
-
-// DingtalkClientID returns the value of the "dingtalk_client_id" field in the mutation.
-func (m *SettingMutation) DingtalkClientID() (r string, exists bool) {
-	v := m.dingtalk_client_id
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldDingtalkClientID returns the old "dingtalk_client_id" field's value of the Setting entity.
-// If the Setting object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *SettingMutation) OldDingtalkClientID(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldDingtalkClientID is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldDingtalkClientID requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldDingtalkClientID: %w", err)
-	}
-	return oldValue.DingtalkClientID, nil
-}
-
-// ClearDingtalkClientID clears the value of the "dingtalk_client_id" field.
-func (m *SettingMutation) ClearDingtalkClientID() {
-	m.dingtalk_client_id = nil
-	m.clearedFields[setting.FieldDingtalkClientID] = struct{}{}
-}
-
-// DingtalkClientIDCleared returns if the "dingtalk_client_id" field was cleared in this mutation.
-func (m *SettingMutation) DingtalkClientIDCleared() bool {
-	_, ok := m.clearedFields[setting.FieldDingtalkClientID]
+// DingtalkOauthCleared returns if the "dingtalk_oauth" field was cleared in this mutation.
+func (m *SettingMutation) DingtalkOauthCleared() bool {
+	_, ok := m.clearedFields[setting.FieldDingtalkOauth]
 	return ok
 }
 
-// ResetDingtalkClientID resets all changes to the "dingtalk_client_id" field.
-func (m *SettingMutation) ResetDingtalkClientID() {
-	m.dingtalk_client_id = nil
-	delete(m.clearedFields, setting.FieldDingtalkClientID)
+// ResetDingtalkOauth resets all changes to the "dingtalk_oauth" field.
+func (m *SettingMutation) ResetDingtalkOauth() {
+	m.dingtalk_oauth = nil
+	delete(m.clearedFields, setting.FieldDingtalkOauth)
 }
 
-// SetDingtalkClientSecret sets the "dingtalk_client_secret" field.
-func (m *SettingMutation) SetDingtalkClientSecret(s string) {
-	m.dingtalk_client_secret = &s
+// SetCustomOauth sets the "custom_oauth" field.
+func (m *SettingMutation) SetCustomOauth(to *types.CustomOAuth) {
+	m.custom_oauth = &to
 }
 
-// DingtalkClientSecret returns the value of the "dingtalk_client_secret" field in the mutation.
-func (m *SettingMutation) DingtalkClientSecret() (r string, exists bool) {
-	v := m.dingtalk_client_secret
+// CustomOauth returns the value of the "custom_oauth" field in the mutation.
+func (m *SettingMutation) CustomOauth() (r *types.CustomOAuth, exists bool) {
+	v := m.custom_oauth
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldDingtalkClientSecret returns the old "dingtalk_client_secret" field's value of the Setting entity.
+// OldCustomOauth returns the old "custom_oauth" field's value of the Setting entity.
 // If the Setting object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *SettingMutation) OldDingtalkClientSecret(ctx context.Context) (v string, err error) {
+func (m *SettingMutation) OldCustomOauth(ctx context.Context) (v *types.CustomOAuth, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldDingtalkClientSecret is only allowed on UpdateOne operations")
+		return v, errors.New("OldCustomOauth is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldDingtalkClientSecret requires an ID field in the mutation")
+		return v, errors.New("OldCustomOauth requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldDingtalkClientSecret: %w", err)
+		return v, fmt.Errorf("querying old value for OldCustomOauth: %w", err)
 	}
-	return oldValue.DingtalkClientSecret, nil
+	return oldValue.CustomOauth, nil
 }
 
-// ClearDingtalkClientSecret clears the value of the "dingtalk_client_secret" field.
-func (m *SettingMutation) ClearDingtalkClientSecret() {
-	m.dingtalk_client_secret = nil
-	m.clearedFields[setting.FieldDingtalkClientSecret] = struct{}{}
+// ClearCustomOauth clears the value of the "custom_oauth" field.
+func (m *SettingMutation) ClearCustomOauth() {
+	m.custom_oauth = nil
+	m.clearedFields[setting.FieldCustomOauth] = struct{}{}
 }
 
-// DingtalkClientSecretCleared returns if the "dingtalk_client_secret" field was cleared in this mutation.
-func (m *SettingMutation) DingtalkClientSecretCleared() bool {
-	_, ok := m.clearedFields[setting.FieldDingtalkClientSecret]
+// CustomOauthCleared returns if the "custom_oauth" field was cleared in this mutation.
+func (m *SettingMutation) CustomOauthCleared() bool {
+	_, ok := m.clearedFields[setting.FieldCustomOauth]
 	return ok
 }
 
-// ResetDingtalkClientSecret resets all changes to the "dingtalk_client_secret" field.
-func (m *SettingMutation) ResetDingtalkClientSecret() {
-	m.dingtalk_client_secret = nil
-	delete(m.clearedFields, setting.FieldDingtalkClientSecret)
+// ResetCustomOauth resets all changes to the "custom_oauth" field.
+func (m *SettingMutation) ResetCustomOauth() {
+	m.custom_oauth = nil
+	delete(m.clearedFields, setting.FieldCustomOauth)
 }
 
 // SetCreatedAt sets the "created_at" field.
@@ -9279,7 +9243,7 @@ func (m *SettingMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *SettingMutation) Fields() []string {
-	fields := make([]string, 0, 8)
+	fields := make([]string, 0, 7)
 	if m.enable_sso != nil {
 		fields = append(fields, setting.FieldEnableSSO)
 	}
@@ -9289,14 +9253,11 @@ func (m *SettingMutation) Fields() []string {
 	if m.disable_password_login != nil {
 		fields = append(fields, setting.FieldDisablePasswordLogin)
 	}
-	if m.enable_dingtalk_oauth != nil {
-		fields = append(fields, setting.FieldEnableDingtalkOauth)
+	if m.dingtalk_oauth != nil {
+		fields = append(fields, setting.FieldDingtalkOauth)
 	}
-	if m.dingtalk_client_id != nil {
-		fields = append(fields, setting.FieldDingtalkClientID)
-	}
-	if m.dingtalk_client_secret != nil {
-		fields = append(fields, setting.FieldDingtalkClientSecret)
+	if m.custom_oauth != nil {
+		fields = append(fields, setting.FieldCustomOauth)
 	}
 	if m.created_at != nil {
 		fields = append(fields, setting.FieldCreatedAt)
@@ -9318,12 +9279,10 @@ func (m *SettingMutation) Field(name string) (ent.Value, bool) {
 		return m.ForceTwoFactorAuth()
 	case setting.FieldDisablePasswordLogin:
 		return m.DisablePasswordLogin()
-	case setting.FieldEnableDingtalkOauth:
-		return m.EnableDingtalkOauth()
-	case setting.FieldDingtalkClientID:
-		return m.DingtalkClientID()
-	case setting.FieldDingtalkClientSecret:
-		return m.DingtalkClientSecret()
+	case setting.FieldDingtalkOauth:
+		return m.DingtalkOauth()
+	case setting.FieldCustomOauth:
+		return m.CustomOauth()
 	case setting.FieldCreatedAt:
 		return m.CreatedAt()
 	case setting.FieldUpdatedAt:
@@ -9343,12 +9302,10 @@ func (m *SettingMutation) OldField(ctx context.Context, name string) (ent.Value,
 		return m.OldForceTwoFactorAuth(ctx)
 	case setting.FieldDisablePasswordLogin:
 		return m.OldDisablePasswordLogin(ctx)
-	case setting.FieldEnableDingtalkOauth:
-		return m.OldEnableDingtalkOauth(ctx)
-	case setting.FieldDingtalkClientID:
-		return m.OldDingtalkClientID(ctx)
-	case setting.FieldDingtalkClientSecret:
-		return m.OldDingtalkClientSecret(ctx)
+	case setting.FieldDingtalkOauth:
+		return m.OldDingtalkOauth(ctx)
+	case setting.FieldCustomOauth:
+		return m.OldCustomOauth(ctx)
 	case setting.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	case setting.FieldUpdatedAt:
@@ -9383,26 +9340,19 @@ func (m *SettingMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetDisablePasswordLogin(v)
 		return nil
-	case setting.FieldEnableDingtalkOauth:
-		v, ok := value.(bool)
+	case setting.FieldDingtalkOauth:
+		v, ok := value.(*types.DingtalkOAuth)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetEnableDingtalkOauth(v)
+		m.SetDingtalkOauth(v)
 		return nil
-	case setting.FieldDingtalkClientID:
-		v, ok := value.(string)
+	case setting.FieldCustomOauth:
+		v, ok := value.(*types.CustomOAuth)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetDingtalkClientID(v)
-		return nil
-	case setting.FieldDingtalkClientSecret:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetDingtalkClientSecret(v)
+		m.SetCustomOauth(v)
 		return nil
 	case setting.FieldCreatedAt:
 		v, ok := value.(time.Time)
@@ -9448,11 +9398,11 @@ func (m *SettingMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *SettingMutation) ClearedFields() []string {
 	var fields []string
-	if m.FieldCleared(setting.FieldDingtalkClientID) {
-		fields = append(fields, setting.FieldDingtalkClientID)
+	if m.FieldCleared(setting.FieldDingtalkOauth) {
+		fields = append(fields, setting.FieldDingtalkOauth)
 	}
-	if m.FieldCleared(setting.FieldDingtalkClientSecret) {
-		fields = append(fields, setting.FieldDingtalkClientSecret)
+	if m.FieldCleared(setting.FieldCustomOauth) {
+		fields = append(fields, setting.FieldCustomOauth)
 	}
 	return fields
 }
@@ -9468,11 +9418,11 @@ func (m *SettingMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *SettingMutation) ClearField(name string) error {
 	switch name {
-	case setting.FieldDingtalkClientID:
-		m.ClearDingtalkClientID()
+	case setting.FieldDingtalkOauth:
+		m.ClearDingtalkOauth()
 		return nil
-	case setting.FieldDingtalkClientSecret:
-		m.ClearDingtalkClientSecret()
+	case setting.FieldCustomOauth:
+		m.ClearCustomOauth()
 		return nil
 	}
 	return fmt.Errorf("unknown Setting nullable field %s", name)
@@ -9491,14 +9441,11 @@ func (m *SettingMutation) ResetField(name string) error {
 	case setting.FieldDisablePasswordLogin:
 		m.ResetDisablePasswordLogin()
 		return nil
-	case setting.FieldEnableDingtalkOauth:
-		m.ResetEnableDingtalkOauth()
+	case setting.FieldDingtalkOauth:
+		m.ResetDingtalkOauth()
 		return nil
-	case setting.FieldDingtalkClientID:
-		m.ResetDingtalkClientID()
-		return nil
-	case setting.FieldDingtalkClientSecret:
-		m.ResetDingtalkClientSecret()
+	case setting.FieldCustomOauth:
+		m.ResetCustomOauth()
 		return nil
 	case setting.FieldCreatedAt:
 		m.ResetCreatedAt()

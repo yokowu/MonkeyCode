@@ -7,6 +7,7 @@ import (
 
 	"github.com/chaitin/MonkeyCode/backend/consts"
 	"github.com/chaitin/MonkeyCode/backend/db"
+	"github.com/chaitin/MonkeyCode/backend/ent/types"
 	"github.com/chaitin/MonkeyCode/backend/pkg/cvt"
 )
 
@@ -49,7 +50,8 @@ type UserRepo interface {
 	AdminLoginHistory(ctx context.Context, page *web.Pagination) ([]*db.AdminLoginHistory, *db.PageInfo, error)
 	GetSetting(ctx context.Context) (*db.Setting, error)
 	UpdateSetting(ctx context.Context, fn func(*db.SettingUpdateOne)) (*db.Setting, error)
-	SignUpOrIn(ctx context.Context, platform consts.UserPlatform, req *OAuthUserInfo) (*db.User, error)
+	OAuthRegister(ctx context.Context, platform consts.UserPlatform, inviteCode string, req *OAuthUserInfo) (*db.User, error)
+	OAuthLogin(ctx context.Context, platform consts.UserPlatform, req *OAuthUserInfo) (*db.User, error)
 }
 
 type UpdateUserReq struct {
@@ -202,6 +204,7 @@ type User struct {
 	Email        string            `json:"email"`          // 邮箱
 	TwoStepAuth  bool              `json:"two_step_auth"`  // 是否开启两步验证
 	Status       consts.UserStatus `json:"status"`         // 用户状态 active: 正常 locked: 锁定 inactive: 禁用
+	AvatarURL    string            `json:"avatar_url"`     // 头像URL
 	CreatedAt    int64             `json:"created_at"`     // 创建时间
 	LastActiveAt int64             `json:"last_active_at"` // 最后活跃时间
 }
@@ -215,6 +218,7 @@ func (u *User) From(e *db.User) *User {
 	u.Username = e.Username
 	u.Email = e.Email
 	u.Status = e.Status
+	u.AvatarURL = e.AvatarURL
 	u.CreatedAt = e.CreatedAt.Unix()
 
 	return u
@@ -249,21 +253,69 @@ type VSCodeSession struct {
 }
 
 type UpdateSettingReq struct {
-	EnableSSO            *bool   `json:"enable_sso"`             // 是否开启SSO
-	ForceTwoFactorAuth   *bool   `json:"force_two_factor_auth"`  // 是否强制两步验证
-	DisablePasswordLogin *bool   `json:"disable_password_login"` // 是否禁用密码登录
-	EnableDingtalkOAuth  *bool   `json:"enable_dingtalk_oauth"`  // 是否开启钉钉OAuth
-	DingtalkClientID     *string `json:"dingtalk_client_id"`     // 钉钉客户端ID
-	DingtalkClientSecret *string `json:"dingtalk_client_secret"` // 钉钉客户端密钥
+	EnableSSO            *bool          `json:"enable_sso"`             // 是否开启SSO
+	ForceTwoFactorAuth   *bool          `json:"force_two_factor_auth"`  // 是否强制两步验证
+	DisablePasswordLogin *bool          `json:"disable_password_login"` // 是否禁用密码登录
+	DingtalkOAuth        *DingtalkOAuth `json:"dingtalk_oauth"`         // 钉钉OAuth配置
+	CustomOAuth          *CustomOAuth   `json:"custom_oauth"`           // 自定义OAuth配置
+}
+
+type DingtalkOAuth struct {
+	Enable       bool   `json:"enable"`        // 钉钉OAuth开关
+	ClientID     string `json:"client_id"`     // 钉钉客户端ID
+	ClientSecret string `json:"client_secret"` // 钉钉客户端密钥
+}
+
+func (d *DingtalkOAuth) From(e *types.DingtalkOAuth) *DingtalkOAuth {
+	if e == nil {
+		d.Enable = false
+		return d
+	}
+
+	d.Enable = e.Enable
+	d.ClientID = e.ClientID
+	return d
+}
+
+type CustomOAuth struct {
+	Enable         bool     `json:"enable"`           // 自定义OAuth开关
+	ClientID       string   `json:"client_id"`        // 自定义客户端ID
+	ClientSecret   string   `json:"client_secret"`    // 自定义客户端密钥
+	AuthorizeURL   string   `json:"authorize_url"`    // 自定义OAuth授权URL
+	AccessTokenURL string   `json:"access_token_url"` // 自定义OAuth访问令牌URL
+	UserInfoURL    string   `json:"userinfo_url"`     // 自定义OAuth用户信息URL
+	Scopes         []string `json:"scopes"`           // 自定义OAuth Scope列表
+	IDField        string   `json:"id_field"`         // 用户信息回包中的ID字段名
+	NameField      string   `json:"name_field"`       // 用户信息回包中的用户名字段名`
+	AvatarField    string   `json:"avatar_field"`     // 用户信息回包中的头像URL字段名`
+}
+
+func (c *CustomOAuth) From(e *types.CustomOAuth) *CustomOAuth {
+	if e == nil {
+		c.Enable = false
+		return c
+	}
+
+	c.Enable = e.Enable
+	c.ClientID = e.ClientID
+	c.AuthorizeURL = e.AuthorizeURL
+	c.AccessTokenURL = e.AccessTokenURL
+	c.UserInfoURL = e.UserInfoURL
+	c.Scopes = e.Scopes
+	c.IDField = e.IDField
+	c.NameField = e.NameField
+	c.AvatarField = e.AvatarField
+	return c
 }
 
 type Setting struct {
-	EnableSSO            bool  `json:"enable_sso"`             // 是否开启SSO
-	ForceTwoFactorAuth   bool  `json:"force_two_factor_auth"`  // 是否强制两步验证
-	DisablePasswordLogin bool  `json:"disable_password_login"` // 是否禁用密码登录
-	EnableDingtalkOAuth  bool  `json:"enable_dingtalk_oauth"`  // 是否开启钉钉OAuth
-	CreatedAt            int64 `json:"created_at"`             // 创建时间
-	UpdatedAt            int64 `json:"updated_at"`             // 更新时间
+	EnableSSO            bool          `json:"enable_sso"`             // 是否开启SSO
+	ForceTwoFactorAuth   bool          `json:"force_two_factor_auth"`  // 是否强制两步验证
+	DisablePasswordLogin bool          `json:"disable_password_login"` // 是否禁用密码登录
+	DingtalkOAuth        DingtalkOAuth `json:"dingtalk_oauth"`         // 钉钉OAuth接入
+	CustomOAuth          CustomOAuth   `json:"custom_oauth"`           // 自定义OAuth接入
+	CreatedAt            int64         `json:"created_at"`             // 创建时间
+	UpdatedAt            int64         `json:"updated_at"`             // 更新时间
 }
 
 func (s *Setting) From(e *db.Setting) *Setting {
@@ -274,7 +326,8 @@ func (s *Setting) From(e *db.Setting) *Setting {
 	s.EnableSSO = e.EnableSSO
 	s.ForceTwoFactorAuth = e.ForceTwoFactorAuth
 	s.DisablePasswordLogin = e.DisablePasswordLogin
-	s.EnableDingtalkOAuth = e.EnableDingtalkOauth
+	s.DingtalkOAuth = *cvt.From(e.DingtalkOauth, &DingtalkOAuth{})
+	s.CustomOAuth = *cvt.From(e.CustomOauth, &CustomOAuth{})
 	s.CreatedAt = e.CreatedAt.Unix()
 	s.UpdatedAt = e.UpdatedAt.Unix()
 

@@ -58,6 +58,7 @@ func NewUserHandler(
 	admin.GET("/login-history", web.BaseHandler(u.AdminLoginHistory, web.WithPage()))
 	admin.DELETE("/delete", web.BaseHandler(u.DeleteAdmin))
 
+	// user
 	g := w.Group("/api/v1/user")
 	g.GET("/oauth/signup-or-in", web.BindHandler(u.OAuthSignUpOrIn))
 	g.GET("/oauth/callback", web.BindHandler(u.OAuthCallback))
@@ -165,7 +166,7 @@ func (h *UserHandler) Delete(c *web.Context) error {
 
 // DeleteAdmin 删除管理员
 //
-//	@Tags			User
+//	@Tags			Admin
 //	@Summary		删除管理员
 //	@Description	删除管理员
 //	@ID				delete-admin
@@ -184,7 +185,7 @@ func (h *UserHandler) DeleteAdmin(c *web.Context) error {
 
 // AdminLogin 管理员登录
 //
-//	@Tags			User
+//	@Tags			Admin
 //	@Summary		管理员登录
 //	@Description	管理员登录
 //	@ID				admin-login
@@ -285,7 +286,7 @@ func (h *UserHandler) Register(c *web.Context, req domain.RegisterReq) error {
 
 // CreateAdmin 创建管理员
 //
-//	@Tags			User
+//	@Tags			Admin
 //	@Summary		创建管理员
 //	@Description	创建管理员
 //	@ID				create-admin
@@ -308,7 +309,7 @@ func (h *UserHandler) CreateAdmin(c *web.Context, req domain.CreateAdminReq) err
 
 // AdminList 获取管理员用户列表
 //
-//	@Tags			User
+//	@Tags			Admin
 //	@Summary		获取管理员用户列表
 //	@Description	获取管理员用户列表
 //	@ID				list-admin-user
@@ -327,7 +328,7 @@ func (h *UserHandler) AdminList(c *web.Context) error {
 
 // AdminLoginHistory 获取管理员登录历史
 //
-//	@Tags			User
+//	@Tags			Admin
 //	@Summary		获取管理员登录历史
 //	@Description	获取管理员登录历史
 //	@ID				admin-login-history
@@ -346,7 +347,7 @@ func (h *UserHandler) AdminLoginHistory(c *web.Context) error {
 
 // GetSetting 获取系统设置
 //
-//	@Tags			User
+//	@Tags			Admin
 //	@Summary		获取系统设置
 //	@Description	获取系统设置
 //	@ID				get-setting
@@ -364,7 +365,7 @@ func (h *UserHandler) GetSetting(c *web.Context) error {
 
 // UpdateSetting 更新系统设置
 //
-//	@Tags			User
+//	@Tags			Admin
 //	@Summary		更新系统设置
 //	@Description	更新系统设置
 //	@ID				update-setting

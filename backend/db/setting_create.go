@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/chaitin/MonkeyCode/backend/db/setting"
+	"github.com/chaitin/MonkeyCode/backend/ent/types"
 	"github.com/google/uuid"
 )
 
@@ -66,45 +67,15 @@ func (sc *SettingCreate) SetNillableDisablePasswordLogin(b *bool) *SettingCreate
 	return sc
 }
 
-// SetEnableDingtalkOauth sets the "enable_dingtalk_oauth" field.
-func (sc *SettingCreate) SetEnableDingtalkOauth(b bool) *SettingCreate {
-	sc.mutation.SetEnableDingtalkOauth(b)
+// SetDingtalkOauth sets the "dingtalk_oauth" field.
+func (sc *SettingCreate) SetDingtalkOauth(to *types.DingtalkOAuth) *SettingCreate {
+	sc.mutation.SetDingtalkOauth(to)
 	return sc
 }
 
-// SetNillableEnableDingtalkOauth sets the "enable_dingtalk_oauth" field if the given value is not nil.
-func (sc *SettingCreate) SetNillableEnableDingtalkOauth(b *bool) *SettingCreate {
-	if b != nil {
-		sc.SetEnableDingtalkOauth(*b)
-	}
-	return sc
-}
-
-// SetDingtalkClientID sets the "dingtalk_client_id" field.
-func (sc *SettingCreate) SetDingtalkClientID(s string) *SettingCreate {
-	sc.mutation.SetDingtalkClientID(s)
-	return sc
-}
-
-// SetNillableDingtalkClientID sets the "dingtalk_client_id" field if the given value is not nil.
-func (sc *SettingCreate) SetNillableDingtalkClientID(s *string) *SettingCreate {
-	if s != nil {
-		sc.SetDingtalkClientID(*s)
-	}
-	return sc
-}
-
-// SetDingtalkClientSecret sets the "dingtalk_client_secret" field.
-func (sc *SettingCreate) SetDingtalkClientSecret(s string) *SettingCreate {
-	sc.mutation.SetDingtalkClientSecret(s)
-	return sc
-}
-
-// SetNillableDingtalkClientSecret sets the "dingtalk_client_secret" field if the given value is not nil.
-func (sc *SettingCreate) SetNillableDingtalkClientSecret(s *string) *SettingCreate {
-	if s != nil {
-		sc.SetDingtalkClientSecret(*s)
-	}
+// SetCustomOauth sets the "custom_oauth" field.
+func (sc *SettingCreate) SetCustomOauth(to *types.CustomOAuth) *SettingCreate {
+	sc.mutation.SetCustomOauth(to)
 	return sc
 }
 
@@ -189,10 +160,6 @@ func (sc *SettingCreate) defaults() {
 		v := setting.DefaultDisablePasswordLogin
 		sc.mutation.SetDisablePasswordLogin(v)
 	}
-	if _, ok := sc.mutation.EnableDingtalkOauth(); !ok {
-		v := setting.DefaultEnableDingtalkOauth
-		sc.mutation.SetEnableDingtalkOauth(v)
-	}
 	if _, ok := sc.mutation.CreatedAt(); !ok {
 		v := setting.DefaultCreatedAt()
 		sc.mutation.SetCreatedAt(v)
@@ -213,9 +180,6 @@ func (sc *SettingCreate) check() error {
 	}
 	if _, ok := sc.mutation.DisablePasswordLogin(); !ok {
 		return &ValidationError{Name: "disable_password_login", err: errors.New(`db: missing required field "Setting.disable_password_login"`)}
-	}
-	if _, ok := sc.mutation.EnableDingtalkOauth(); !ok {
-		return &ValidationError{Name: "enable_dingtalk_oauth", err: errors.New(`db: missing required field "Setting.enable_dingtalk_oauth"`)}
 	}
 	if _, ok := sc.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`db: missing required field "Setting.created_at"`)}
@@ -271,17 +235,13 @@ func (sc *SettingCreate) createSpec() (*Setting, *sqlgraph.CreateSpec) {
 		_spec.SetField(setting.FieldDisablePasswordLogin, field.TypeBool, value)
 		_node.DisablePasswordLogin = value
 	}
-	if value, ok := sc.mutation.EnableDingtalkOauth(); ok {
-		_spec.SetField(setting.FieldEnableDingtalkOauth, field.TypeBool, value)
-		_node.EnableDingtalkOauth = value
+	if value, ok := sc.mutation.DingtalkOauth(); ok {
+		_spec.SetField(setting.FieldDingtalkOauth, field.TypeJSON, value)
+		_node.DingtalkOauth = value
 	}
-	if value, ok := sc.mutation.DingtalkClientID(); ok {
-		_spec.SetField(setting.FieldDingtalkClientID, field.TypeString, value)
-		_node.DingtalkClientID = value
-	}
-	if value, ok := sc.mutation.DingtalkClientSecret(); ok {
-		_spec.SetField(setting.FieldDingtalkClientSecret, field.TypeString, value)
-		_node.DingtalkClientSecret = value
+	if value, ok := sc.mutation.CustomOauth(); ok {
+		_spec.SetField(setting.FieldCustomOauth, field.TypeJSON, value)
+		_node.CustomOauth = value
 	}
 	if value, ok := sc.mutation.CreatedAt(); ok {
 		_spec.SetField(setting.FieldCreatedAt, field.TypeTime, value)
@@ -379,51 +339,39 @@ func (u *SettingUpsert) UpdateDisablePasswordLogin() *SettingUpsert {
 	return u
 }
 
-// SetEnableDingtalkOauth sets the "enable_dingtalk_oauth" field.
-func (u *SettingUpsert) SetEnableDingtalkOauth(v bool) *SettingUpsert {
-	u.Set(setting.FieldEnableDingtalkOauth, v)
+// SetDingtalkOauth sets the "dingtalk_oauth" field.
+func (u *SettingUpsert) SetDingtalkOauth(v *types.DingtalkOAuth) *SettingUpsert {
+	u.Set(setting.FieldDingtalkOauth, v)
 	return u
 }
 
-// UpdateEnableDingtalkOauth sets the "enable_dingtalk_oauth" field to the value that was provided on create.
-func (u *SettingUpsert) UpdateEnableDingtalkOauth() *SettingUpsert {
-	u.SetExcluded(setting.FieldEnableDingtalkOauth)
+// UpdateDingtalkOauth sets the "dingtalk_oauth" field to the value that was provided on create.
+func (u *SettingUpsert) UpdateDingtalkOauth() *SettingUpsert {
+	u.SetExcluded(setting.FieldDingtalkOauth)
 	return u
 }
 
-// SetDingtalkClientID sets the "dingtalk_client_id" field.
-func (u *SettingUpsert) SetDingtalkClientID(v string) *SettingUpsert {
-	u.Set(setting.FieldDingtalkClientID, v)
+// ClearDingtalkOauth clears the value of the "dingtalk_oauth" field.
+func (u *SettingUpsert) ClearDingtalkOauth() *SettingUpsert {
+	u.SetNull(setting.FieldDingtalkOauth)
 	return u
 }
 
-// UpdateDingtalkClientID sets the "dingtalk_client_id" field to the value that was provided on create.
-func (u *SettingUpsert) UpdateDingtalkClientID() *SettingUpsert {
-	u.SetExcluded(setting.FieldDingtalkClientID)
+// SetCustomOauth sets the "custom_oauth" field.
+func (u *SettingUpsert) SetCustomOauth(v *types.CustomOAuth) *SettingUpsert {
+	u.Set(setting.FieldCustomOauth, v)
 	return u
 }
 
-// ClearDingtalkClientID clears the value of the "dingtalk_client_id" field.
-func (u *SettingUpsert) ClearDingtalkClientID() *SettingUpsert {
-	u.SetNull(setting.FieldDingtalkClientID)
+// UpdateCustomOauth sets the "custom_oauth" field to the value that was provided on create.
+func (u *SettingUpsert) UpdateCustomOauth() *SettingUpsert {
+	u.SetExcluded(setting.FieldCustomOauth)
 	return u
 }
 
-// SetDingtalkClientSecret sets the "dingtalk_client_secret" field.
-func (u *SettingUpsert) SetDingtalkClientSecret(v string) *SettingUpsert {
-	u.Set(setting.FieldDingtalkClientSecret, v)
-	return u
-}
-
-// UpdateDingtalkClientSecret sets the "dingtalk_client_secret" field to the value that was provided on create.
-func (u *SettingUpsert) UpdateDingtalkClientSecret() *SettingUpsert {
-	u.SetExcluded(setting.FieldDingtalkClientSecret)
-	return u
-}
-
-// ClearDingtalkClientSecret clears the value of the "dingtalk_client_secret" field.
-func (u *SettingUpsert) ClearDingtalkClientSecret() *SettingUpsert {
-	u.SetNull(setting.FieldDingtalkClientSecret)
+// ClearCustomOauth clears the value of the "custom_oauth" field.
+func (u *SettingUpsert) ClearCustomOauth() *SettingUpsert {
+	u.SetNull(setting.FieldCustomOauth)
 	return u
 }
 
@@ -541,59 +489,45 @@ func (u *SettingUpsertOne) UpdateDisablePasswordLogin() *SettingUpsertOne {
 	})
 }
 
-// SetEnableDingtalkOauth sets the "enable_dingtalk_oauth" field.
-func (u *SettingUpsertOne) SetEnableDingtalkOauth(v bool) *SettingUpsertOne {
+// SetDingtalkOauth sets the "dingtalk_oauth" field.
+func (u *SettingUpsertOne) SetDingtalkOauth(v *types.DingtalkOAuth) *SettingUpsertOne {
 	return u.Update(func(s *SettingUpsert) {
-		s.SetEnableDingtalkOauth(v)
+		s.SetDingtalkOauth(v)
 	})
 }
 
-// UpdateEnableDingtalkOauth sets the "enable_dingtalk_oauth" field to the value that was provided on create.
-func (u *SettingUpsertOne) UpdateEnableDingtalkOauth() *SettingUpsertOne {
+// UpdateDingtalkOauth sets the "dingtalk_oauth" field to the value that was provided on create.
+func (u *SettingUpsertOne) UpdateDingtalkOauth() *SettingUpsertOne {
 	return u.Update(func(s *SettingUpsert) {
-		s.UpdateEnableDingtalkOauth()
+		s.UpdateDingtalkOauth()
 	})
 }
 
-// SetDingtalkClientID sets the "dingtalk_client_id" field.
-func (u *SettingUpsertOne) SetDingtalkClientID(v string) *SettingUpsertOne {
+// ClearDingtalkOauth clears the value of the "dingtalk_oauth" field.
+func (u *SettingUpsertOne) ClearDingtalkOauth() *SettingUpsertOne {
 	return u.Update(func(s *SettingUpsert) {
-		s.SetDingtalkClientID(v)
+		s.ClearDingtalkOauth()
 	})
 }
 
-// UpdateDingtalkClientID sets the "dingtalk_client_id" field to the value that was provided on create.
-func (u *SettingUpsertOne) UpdateDingtalkClientID() *SettingUpsertOne {
+// SetCustomOauth sets the "custom_oauth" field.
+func (u *SettingUpsertOne) SetCustomOauth(v *types.CustomOAuth) *SettingUpsertOne {
 	return u.Update(func(s *SettingUpsert) {
-		s.UpdateDingtalkClientID()
+		s.SetCustomOauth(v)
 	})
 }
 
-// ClearDingtalkClientID clears the value of the "dingtalk_client_id" field.
-func (u *SettingUpsertOne) ClearDingtalkClientID() *SettingUpsertOne {
+// UpdateCustomOauth sets the "custom_oauth" field to the value that was provided on create.
+func (u *SettingUpsertOne) UpdateCustomOauth() *SettingUpsertOne {
 	return u.Update(func(s *SettingUpsert) {
-		s.ClearDingtalkClientID()
+		s.UpdateCustomOauth()
 	})
 }
 
-// SetDingtalkClientSecret sets the "dingtalk_client_secret" field.
-func (u *SettingUpsertOne) SetDingtalkClientSecret(v string) *SettingUpsertOne {
+// ClearCustomOauth clears the value of the "custom_oauth" field.
+func (u *SettingUpsertOne) ClearCustomOauth() *SettingUpsertOne {
 	return u.Update(func(s *SettingUpsert) {
-		s.SetDingtalkClientSecret(v)
-	})
-}
-
-// UpdateDingtalkClientSecret sets the "dingtalk_client_secret" field to the value that was provided on create.
-func (u *SettingUpsertOne) UpdateDingtalkClientSecret() *SettingUpsertOne {
-	return u.Update(func(s *SettingUpsert) {
-		s.UpdateDingtalkClientSecret()
-	})
-}
-
-// ClearDingtalkClientSecret clears the value of the "dingtalk_client_secret" field.
-func (u *SettingUpsertOne) ClearDingtalkClientSecret() *SettingUpsertOne {
-	return u.Update(func(s *SettingUpsert) {
-		s.ClearDingtalkClientSecret()
+		s.ClearCustomOauth()
 	})
 }
 
@@ -882,59 +816,45 @@ func (u *SettingUpsertBulk) UpdateDisablePasswordLogin() *SettingUpsertBulk {
 	})
 }
 
-// SetEnableDingtalkOauth sets the "enable_dingtalk_oauth" field.
-func (u *SettingUpsertBulk) SetEnableDingtalkOauth(v bool) *SettingUpsertBulk {
+// SetDingtalkOauth sets the "dingtalk_oauth" field.
+func (u *SettingUpsertBulk) SetDingtalkOauth(v *types.DingtalkOAuth) *SettingUpsertBulk {
 	return u.Update(func(s *SettingUpsert) {
-		s.SetEnableDingtalkOauth(v)
+		s.SetDingtalkOauth(v)
 	})
 }
 
-// UpdateEnableDingtalkOauth sets the "enable_dingtalk_oauth" field to the value that was provided on create.
-func (u *SettingUpsertBulk) UpdateEnableDingtalkOauth() *SettingUpsertBulk {
+// UpdateDingtalkOauth sets the "dingtalk_oauth" field to the value that was provided on create.
+func (u *SettingUpsertBulk) UpdateDingtalkOauth() *SettingUpsertBulk {
 	return u.Update(func(s *SettingUpsert) {
-		s.UpdateEnableDingtalkOauth()
+		s.UpdateDingtalkOauth()
 	})
 }
 
-// SetDingtalkClientID sets the "dingtalk_client_id" field.
-func (u *SettingUpsertBulk) SetDingtalkClientID(v string) *SettingUpsertBulk {
+// ClearDingtalkOauth clears the value of the "dingtalk_oauth" field.
+func (u *SettingUpsertBulk) ClearDingtalkOauth() *SettingUpsertBulk {
 	return u.Update(func(s *SettingUpsert) {
-		s.SetDingtalkClientID(v)
+		s.ClearDingtalkOauth()
 	})
 }
 
-// UpdateDingtalkClientID sets the "dingtalk_client_id" field to the value that was provided on create.
-func (u *SettingUpsertBulk) UpdateDingtalkClientID() *SettingUpsertBulk {
+// SetCustomOauth sets the "custom_oauth" field.
+func (u *SettingUpsertBulk) SetCustomOauth(v *types.CustomOAuth) *SettingUpsertBulk {
 	return u.Update(func(s *SettingUpsert) {
-		s.UpdateDingtalkClientID()
+		s.SetCustomOauth(v)
 	})
 }
 
-// ClearDingtalkClientID clears the value of the "dingtalk_client_id" field.
-func (u *SettingUpsertBulk) ClearDingtalkClientID() *SettingUpsertBulk {
+// UpdateCustomOauth sets the "custom_oauth" field to the value that was provided on create.
+func (u *SettingUpsertBulk) UpdateCustomOauth() *SettingUpsertBulk {
 	return u.Update(func(s *SettingUpsert) {
-		s.ClearDingtalkClientID()
+		s.UpdateCustomOauth()
 	})
 }
 
-// SetDingtalkClientSecret sets the "dingtalk_client_secret" field.
-func (u *SettingUpsertBulk) SetDingtalkClientSecret(v string) *SettingUpsertBulk {
+// ClearCustomOauth clears the value of the "custom_oauth" field.
+func (u *SettingUpsertBulk) ClearCustomOauth() *SettingUpsertBulk {
 	return u.Update(func(s *SettingUpsert) {
-		s.SetDingtalkClientSecret(v)
-	})
-}
-
-// UpdateDingtalkClientSecret sets the "dingtalk_client_secret" field to the value that was provided on create.
-func (u *SettingUpsertBulk) UpdateDingtalkClientSecret() *SettingUpsertBulk {
-	return u.Update(func(s *SettingUpsert) {
-		s.UpdateDingtalkClientSecret()
-	})
-}
-
-// ClearDingtalkClientSecret clears the value of the "dingtalk_client_secret" field.
-func (u *SettingUpsertBulk) ClearDingtalkClientSecret() *SettingUpsertBulk {
-	return u.Update(func(s *SettingUpsert) {
-		s.ClearDingtalkClientSecret()
+		s.ClearCustomOauth()
 	})
 }
 
