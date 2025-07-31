@@ -123,6 +123,12 @@ func NewUserHandler(
 	cplt.GET("/record", web.BindHandler(u.ListCompletionRecord, web.WithPage()))
 	cplt.GET("/info", web.BaseHandler(u.CompletionInfo))
 
+	// user security
+	sc := w.Group("/api/v1/user/security")
+	sc.Use(auth.UserAuth(), active.Active("user"))
+	sc.GET("/scanning", web.BindHandler(u.SecurityList, web.WithPage()))
+	sc.GET("/scanning/detail", web.BaseHandler(u.SecurityDetail))
+
 	return u
 }
 

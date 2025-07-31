@@ -1659,6 +1659,138 @@
                 }
             }
         },
+        "/api/v1/security/scanning": {
+            "get": {
+                "description": "获取扫描结果",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Security Scanning"
+                ],
+                "summary": "获取扫描结果",
+                "operationId": "security-scanning-list",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "作者",
+                        "name": "author",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "下一页标识",
+                        "name": "next_token",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 1,
+                        "description": "分页",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "项目名称",
+                        "name": "project_name",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 10,
+                        "description": "每页多少条记录",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/web.Resp"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/domain.ListSecurityScanningResp"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/security/scanning/detail": {
+            "get": {
+                "description": "获取扫描风险详情",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Security Scanning"
+                ],
+                "summary": "获取扫描风险详情",
+                "operationId": "security-scanning-detail",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "扫描任务id",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/web.Resp"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/domain.SecurityScanningRiskDetail"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/static/vsix": {
             "get": {
                 "description": "下载VSCode插件",
@@ -2696,6 +2828,138 @@
                 }
             }
         },
+        "/api/v1/user/security/scanning": {
+            "get": {
+                "description": "获取用户扫描结果",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User Security Scanning"
+                ],
+                "summary": "获取用户扫描结果",
+                "operationId": "user-security-scanning-list",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "作者",
+                        "name": "author",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "下一页标识",
+                        "name": "next_token",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 1,
+                        "description": "分页",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "项目名称",
+                        "name": "project_name",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 10,
+                        "description": "每页多少条记录",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/web.Resp"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/domain.ListSecurityScanningResp"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/user/security/scanning/detail": {
+            "get": {
+                "description": "获取用户扫描风险详情",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User Security Scanning"
+                ],
+                "summary": "获取用户扫描风险详情",
+                "operationId": "user-security-scanning-detail",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "扫描任务id",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/web.Resp"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/domain.SecurityScanningRiskDetail"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/user/update": {
             "put": {
                 "description": "更新用户",
@@ -3437,6 +3701,86 @@
                     }
                 }
             }
+        },
+        "/v1/security/scanning": {
+            "get": {
+                "description": "分页逻辑只支持用 next_token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "OpenAIV1"
+                ],
+                "summary": "扫描任务列表",
+                "operationId": "list-security-scanning",
+                "parameters": [
+                    {
+                        "description": "扫描任务列表请求",
+                        "name": "param",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/domain.ListSecurityScanningReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/web.Resp"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/domain.ListSecurityScanningBriefResp"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "创建扫描任务",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "OpenAIV1"
+                ],
+                "summary": "创建扫描任务",
+                "operationId": "create-security-scanning",
+                "parameters": [
+                    {
+                        "description": "创建扫描任务请求",
+                        "name": "param",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/domain.CreateSecurityScanningReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/web.Resp"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -3549,6 +3893,96 @@
                 "ReportActionNewTask",
                 "ReportActionFeedbackTask",
                 "ReportActionAbortTask"
+            ]
+        },
+        "consts.SecurityScanningLanguage": {
+            "type": "string",
+            "enum": [
+                "C/C++",
+                "Java",
+                "Python",
+                "JavaScript",
+                "Go",
+                "PHP",
+                "C#",
+                "Swift",
+                "Ruby",
+                "Rust",
+                "HTML",
+                "Objective-C/C++",
+                "OCaml",
+                "Kotlin",
+                "Scala",
+                "Solidity",
+                "COBOL",
+                "Shell",
+                "SQL",
+                "Fortran",
+                "Dart",
+                "Groovy",
+                "Lua",
+                "Secrets",
+                "IaC"
+            ],
+            "x-enum-varnames": [
+                "SecurityScanningLanguageCpp",
+                "SecurityScanningLanguageJava",
+                "SecurityScanningLanguagePython",
+                "SecurityScanningLanguageJavaScript",
+                "SecurityScanningLanguageGo",
+                "SecurityScanningLanguagePHP",
+                "SecurityScanningLanguageCS",
+                "SecurityScanningLanguageSwift",
+                "SecurityScanningLanguageRuby",
+                "SecurityScanningLanguageRust",
+                "SecurityScanningLanguageHTML",
+                "SecurityScanningLanguageObjectiveC",
+                "SecurityScanningLanguageOCaml",
+                "SecurityScanningLanguageKotlin",
+                "SecurityScanningLanguageScala",
+                "SecurityScanningLanguageSolidity",
+                "SecurityScanningLanguageCOBOL",
+                "SecurityScanningLanguageShell",
+                "SecurityScanningLanguageSQL",
+                "SecurityScanningLanguageFortran",
+                "SecurityScanningLanguageDart",
+                "SecurityScanningLanguageGroovy",
+                "SecurityScanningLanguageLua",
+                "SecurityScanningLanguageSecrets",
+                "SecurityScanningLanguageIaC"
+            ]
+        },
+        "consts.SecurityScanningRiskLevel": {
+            "type": "string",
+            "enum": [
+                "severe",
+                "critical",
+                "suggest"
+            ],
+            "x-enum-comments": {
+                "SecurityScanningRiskLevelCritical": "高危",
+                "SecurityScanningRiskLevelSevere": "严重",
+                "SecurityScanningRiskLevelSuggest": "建议"
+            },
+            "x-enum-varnames": [
+                "SecurityScanningRiskLevelSevere",
+                "SecurityScanningRiskLevelCritical",
+                "SecurityScanningRiskLevelSuggest"
+            ]
+        },
+        "consts.SecurityScanningStatus": {
+            "type": "string",
+            "enum": [
+                "pending",
+                "running",
+                "success",
+                "failed"
+            ],
+            "x-enum-varnames": [
+                "SecurityScanningStatusPending",
+                "SecurityScanningStatusRunning",
+                "SecurityScanningStatusSuccess",
+                "SecurityScanningStatusFailed"
             ]
         },
         "consts.UserPlatform": {
@@ -4222,6 +4656,23 @@
                 }
             }
         },
+        "domain.CreateSecurityScanningReq": {
+            "type": "object",
+            "properties": {
+                "language": {
+                    "description": "扫描语言",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/consts.SecurityScanningLanguage"
+                        }
+                    ]
+                },
+                "workspace": {
+                    "description": "项目目录",
+                    "type": "string"
+                }
+            }
+        },
         "domain.CreateWorkspaceFileReq": {
             "type": "object",
             "required": [
@@ -4669,6 +5120,75 @@
                 }
             }
         },
+        "domain.ListSecurityScanningBriefResp": {
+            "type": "object",
+            "properties": {
+                "has_next_page": {
+                    "type": "boolean"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.SecurityScanningBrief"
+                    }
+                },
+                "next_token": {
+                    "type": "string"
+                },
+                "total_count": {
+                    "type": "integer"
+                }
+            }
+        },
+        "domain.ListSecurityScanningReq": {
+            "type": "object",
+            "properties": {
+                "author": {
+                    "description": "作者",
+                    "type": "string"
+                },
+                "next_token": {
+                    "description": "下一页标识",
+                    "type": "string"
+                },
+                "page": {
+                    "description": "分页",
+                    "type": "integer",
+                    "default": 1,
+                    "minimum": 1
+                },
+                "project_name": {
+                    "description": "项目名称",
+                    "type": "string"
+                },
+                "size": {
+                    "description": "每页多少条记录",
+                    "type": "integer",
+                    "default": 10,
+                    "minimum": 1
+                }
+            }
+        },
+        "domain.ListSecurityScanningResp": {
+            "type": "object",
+            "properties": {
+                "has_next_page": {
+                    "type": "boolean"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.SecurityScanningResult"
+                    }
+                },
+                "next_token": {
+                    "type": "string"
+                },
+                "total_count": {
+                    "type": "integer"
+                }
+            }
+        },
         "domain.ListUserResp": {
             "type": "object",
             "properties": {
@@ -5104,6 +5624,118 @@
                 "user_input": {
                     "description": "用户输入的新文本（用于reject action）",
                     "type": "string"
+                }
+            }
+        },
+        "domain.SecurityScanningBrief": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "description": "创建时间",
+                    "type": "integer"
+                },
+                "report_url": {
+                    "description": "报告url",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "扫描状态",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/consts.SecurityScanningStatus"
+                        }
+                    ]
+                },
+                "workspace": {
+                    "description": "项目目录",
+                    "type": "string"
+                }
+            }
+        },
+        "domain.SecurityScanningResult": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "description": "扫描开始时间",
+                    "type": "integer"
+                },
+                "id": {
+                    "description": "扫描任务id",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "扫描任务",
+                    "type": "string"
+                },
+                "project_name": {
+                    "description": "项目名称",
+                    "type": "string"
+                },
+                "risk": {
+                    "description": "风险结果",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/domain.SecurityScanningRiskResult"
+                        }
+                    ]
+                },
+                "status": {
+                    "description": "扫描状态",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/consts.SecurityScanningStatus"
+                        }
+                    ]
+                },
+                "user": {
+                    "description": "用户",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/domain.User"
+                        }
+                    ]
+                }
+            }
+        },
+        "domain.SecurityScanningRiskDetail": {
+            "type": "object",
+            "properties": {
+                "desc": {
+                    "description": "风险描述",
+                    "type": "string"
+                },
+                "filename": {
+                    "description": "风险文件名",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "风险id",
+                    "type": "string"
+                },
+                "level": {
+                    "description": "风险等级",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/consts.SecurityScanningRiskLevel"
+                        }
+                    ]
+                }
+            }
+        },
+        "domain.SecurityScanningRiskResult": {
+            "type": "object",
+            "properties": {
+                "critical_count": {
+                    "description": "高危数",
+                    "type": "integer"
+                },
+                "severe_count": {
+                    "description": "严重数",
+                    "type": "integer"
+                },
+                "suggest_count": {
+                    "description": "建议数",
+                    "type": "integer"
                 }
             }
         },

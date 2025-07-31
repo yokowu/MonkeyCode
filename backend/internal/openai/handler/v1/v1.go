@@ -216,3 +216,33 @@ func (h *V1Handler) GetConfig(c *web.Context, req domain.ConfigReq) error {
 func (h *V1Handler) HealthCheck(c *web.Context) error {
 	return c.Success("MonkeyCode")
 }
+
+// CreateSecurityScanning 创建扫描任务
+//
+//	@Tags			OpenAIV1
+//	@Summary		创建扫描任务
+//	@Description	创建扫描任务
+//	@ID				create-security-scanning
+//	@Accept			json
+//	@Produce		json
+//	@Param			param	body		domain.CreateSecurityScanningReq	true	"创建扫描任务请求"
+//	@Success		200		{object}	web.Resp{}
+//	@Router			/v1/security/scanning [post]
+func (h *V1Handler) CreateSecurityScanning(c *web.Context, req domain.CreateSecurityScanningReq) error {
+	return c.Success(nil)
+}
+
+// ListSecurityScanning 扫描任务列表
+//
+//	@Tags			OpenAIV1
+//	@Summary		扫描任务列表
+//	@Description	分页逻辑只支持用 next_token
+//	@ID				list-security-scanning
+//	@Accept			json
+//	@Produce		json
+//	@Param			param	body		domain.ListSecurityScanningReq	true	"扫描任务列表请求"
+//	@Success		200		{object}	web.Resp{data=domain.ListSecurityScanningBriefResp}
+//	@Router			/v1/security/scanning [get]
+func (h *V1Handler) ListSecurityScanning(c *web.Context, req domain.ListSecurityScanningReq) error {
+	return c.Success(nil)
+}
