@@ -2,20 +2,10 @@ package domain
 
 import (
 	"context"
-	"net/http"
-
-	"github.com/rokku-c/go-openai"
 
 	"github.com/chaitin/MonkeyCode/backend/consts"
 	"github.com/chaitin/MonkeyCode/backend/db"
 )
-
-type Proxy interface {
-	AcceptCompletion(ctx context.Context, req *AcceptCompletionReq) error
-	HandleCompletion(ctx context.Context, w http.ResponseWriter, req CompletionRequest)
-	HandleChatCompletion(ctx context.Context, w http.ResponseWriter, req *openai.ChatCompletionRequest)
-	HandleEmbeddings(ctx context.Context, w http.ResponseWriter, req *openai.EmbeddingRequest)
-}
 
 type ProxyUsecase interface {
 	SelectModelWithLoadBalancing(modelName string, modelType consts.ModelType) (*Model, error)
@@ -23,6 +13,7 @@ type ProxyUsecase interface {
 	ValidateApiKey(ctx context.Context, key string) (*ApiKey, error)
 	AcceptCompletion(ctx context.Context, req *AcceptCompletionReq) error
 	Report(ctx context.Context, req *ReportReq) error
+	CreateSecurityScanning(ctx context.Context, req *CreateSecurityScanningReq) (string, error)
 }
 
 type ProxyRepo interface {

@@ -58,6 +58,8 @@ func NewV1Handler(
 	g.POST("/chat/completions", web.BaseHandler(h.ChatCompletion), active.Active("apikey"))
 	g.POST("/completions", web.BaseHandler(h.Completions), active.Active("apikey"))
 	g.POST("/embeddings", web.BaseHandler(h.Embeddings), active.Active("apikey"))
+	g.POST("/security/scanning", web.BindHandler(h.CreateSecurityScanning), active.Active("apikey"))
+	g.GET("/security/scanning", web.BindHandler(h.ListSecurityScanning), active.Active("apikey"))
 	return h
 }
 
@@ -229,7 +231,12 @@ func (h *V1Handler) HealthCheck(c *web.Context) error {
 //	@Success		200		{object}	web.Resp{}
 //	@Router			/v1/security/scanning [post]
 func (h *V1Handler) CreateSecurityScanning(c *web.Context, req domain.CreateSecurityScanningReq) error {
-	return c.Success(nil)
+	id, err := h.proxyUse.CreateSecurityScanning(c.Request().Context(), &req)
+	if err != nil {
+		h.logger.With("error", err).With("id", id).ErrorContext(c.Request().Context(), "create security scanning failed")
+		return err
+	}
+	return c.Success(id)
 }
 
 // ListSecurityScanning 扫描任务列表

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -30,24 +31,22 @@ const (
 
 type Task[T any] struct {
 	ID        string     `json:"id"`
-	TaskType  string     `json:"task_type"`
-	Data      T          `json:"data"`
 	Status    TaskStatus `json:"status"`
+	Data      T          `json:"data"`
 	CreatedAt time.Time  `json:"created_at"`
 	UpdatedAt time.Time  `json:"updated_at"`
 	Error     string     `json:"error,omitempty"`
 }
 
-type TaskHandler[T any] interface {
-	Handle(ctx context.Context, task *Task[T]) error
-}
+type TaskHandler[T any] func(ctx context.Context, task *Task[T]) error
 
 type QueueRunner[T any] struct {
 	rdb        *redis.Client
-	queueName  string
+	name       string
 	handlers   map[string]TaskHandler[T]
 	logger     *slog.Logger
 	concurrent int
+	mu         *sync.RWMutex
 }
 
 func NewQueueRunner[T any](
@@ -57,32 +56,45 @@ func NewQueueRunner[T any](
 ) *QueueRunner[T] {
 	return &QueueRunner[T]{
 		rdb:        rdb,
-		queueName:  DefaultQueueName,
+		name:       DefaultQueueName,
 		handlers:   make(map[string]TaskHandler[T]),
 		logger:     logger,
 		concurrent: cfg.Security.QueueLimit,
+		mu:         &sync.RWMutex{},
 	}
 }
 
-func (r *QueueRunner[T]) SetQueueName(name string) {
-	r.queueName = name
+func (r *QueueRunner[T]) addHandler(id string, h TaskHandler[T]) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.handlers[id] = h
 }
 
-func (r *QueueRunner[T]) RegisterHandler(taskType string, handler TaskHandler[T]) {
-	r.handlers[taskType] = handler
+func (r *QueueRunner[T]) getHandler(id string) (TaskHandler[T], bool) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	handler, exists := r.handlers[id]
+	return handler, exists
 }
 
-func (r *QueueRunner[T]) EnqueueTask(ctx context.Context, taskType string, data T) (string, error) {
+func (r *QueueRunner[T]) delHandler(id string) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	delete(r.handlers, id)
+}
+
+func (r *QueueRunner[T]) Enqueue(ctx context.Context, data T, h TaskHandler[T]) (string, error) {
 	taskID := uuid.New().String()
 
 	task := &Task[T]{
 		ID:        taskID,
-		TaskType:  taskType,
-		Data:      data,
 		Status:    TaskStatusPending,
+		Data:      data,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
+
+	r.addHandler(taskID, h)
 
 	taskBytes, err := json.Marshal(task)
 	if err != nil {
@@ -94,7 +106,7 @@ func (r *QueueRunner[T]) EnqueueTask(ctx context.Context, taskType string, data 
 	taskKey := fmt.Sprintf("%s%s", TaskKeyPrefix, taskID)
 	pipe.Set(ctx, taskKey, taskBytes, 24*time.Hour) // 设置24小时过期时间
 
-	pipe.LPush(ctx, r.queueName, taskID)
+	pipe.LPush(ctx, r.name, taskID)
 
 	_, err = pipe.Exec(ctx)
 	if err != nil {
@@ -153,36 +165,42 @@ func (r *QueueRunner[T]) processTask(ctx context.Context, taskID string) error {
 		return fmt.Errorf("get task: %w", err)
 	}
 
-	handler, ok := r.handlers[task.TaskType]
+	handler, ok := r.getHandler(task.ID)
 	if !ok {
-		err := fmt.Errorf("no handler for task type: %s", task.TaskType)
+		err := fmt.Errorf("no handler for task id: %s", task.ID)
 		_ = r.UpdateTaskStatus(ctx, taskID, TaskStatusFailed, err)
+		r.delHandler(taskID)
 		return err
 	}
 
 	if err := r.UpdateTaskStatus(ctx, taskID, TaskStatusProcessing, nil); err != nil {
+		r.delHandler(taskID)
 		return fmt.Errorf("update task status: %w", err)
 	}
 
-	handleErr := handler.Handle(ctx, task)
+	handleErr := handler(ctx, task)
 
 	if handleErr != nil {
 		if err := r.UpdateTaskStatus(ctx, taskID, TaskStatusFailed, handleErr); err != nil {
 			r.logger.ErrorContext(ctx, "Failed to update task status", "error", err, "task_id", taskID)
 		}
+		r.delHandler(taskID)
 		return handleErr
 	}
 
 	if err := r.UpdateTaskStatus(ctx, taskID, TaskStatusCompleted, nil); err != nil {
 		r.logger.ErrorContext(ctx, "Failed to update task status", "error", err, "task_id", taskID)
+		r.delHandler(taskID)
 		return err
 	}
 
+	// Task processed successfully, remove handler
+	r.delHandler(taskID)
 	return nil
 }
 
 func (r *QueueRunner[T]) Run(ctx context.Context) error {
-	r.logger.InfoContext(ctx, "Starting queue runner", "queue", r.queueName, "concurrent", r.concurrent)
+	r.logger.InfoContext(ctx, "Starting queue runner", "queue", r.name, "concurrent", r.concurrent)
 
 	for i := 0; i < r.concurrent; i++ {
 		go func(workerID int) {
@@ -195,7 +213,7 @@ func (r *QueueRunner[T]) Run(ctx context.Context) error {
 				default:
 				}
 
-				result, err := r.rdb.BRPop(ctx, 5*time.Second, r.queueName).Result()
+				result, err := r.rdb.BRPop(ctx, 5*time.Second, r.name).Result()
 				if err != nil {
 					if err == redis.Nil {
 						continue
