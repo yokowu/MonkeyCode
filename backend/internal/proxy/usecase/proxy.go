@@ -3,15 +3,18 @@ package usecase
 import (
 	"context"
 	"log/slog"
+	"time"
 
-	"github.com/chaitin/MonkeyCode/backend/config"
-	"github.com/chaitin/MonkeyCode/backend/db"
-	"github.com/chaitin/MonkeyCode/backend/pkg/cvt"
-	"github.com/chaitin/MonkeyCode/backend/pkg/queuerunner"
 	"github.com/redis/go-redis/v9"
 
+	"github.com/chaitin/MonkeyCode/backend/config"
 	"github.com/chaitin/MonkeyCode/backend/consts"
+	"github.com/chaitin/MonkeyCode/backend/db"
 	"github.com/chaitin/MonkeyCode/backend/domain"
+	"github.com/chaitin/MonkeyCode/backend/pkg/cvt"
+	"github.com/chaitin/MonkeyCode/backend/pkg/queuerunner"
+	"github.com/chaitin/MonkeyCode/backend/pkg/request"
+	"github.com/chaitin/MonkeyCode/backend/pkg/scan"
 )
 
 type ProxyUsecase struct {
@@ -19,6 +22,7 @@ type ProxyUsecase struct {
 	modelRepo   domain.ModelRepo
 	logger      *slog.Logger
 	queuerunner *queuerunner.QueueRunner[domain.CreateSecurityScanningReq]
+	client      *request.Client
 }
 
 func NewProxyUsecase(
@@ -28,12 +32,17 @@ func NewProxyUsecase(
 	cfg *config.Config,
 	redis *redis.Client,
 ) domain.ProxyUsecase {
-	return &ProxyUsecase{
+	client := request.NewClient("http", "monkeycode-scanner", 15*time.Second)
+	client.SetDebug(cfg.Debug)
+	p := &ProxyUsecase{
 		repo:        repo,
 		modelRepo:   modelRepo,
 		logger:      logger.With("module", "ProxyUsecase"),
 		queuerunner: queuerunner.NewQueueRunner[domain.CreateSecurityScanningReq](cfg, redis, logger),
+		client:      client,
 	}
+	go p.queuerunner.Run(context.Background())
+	return p
 }
 
 func (p *ProxyUsecase) Record(ctx context.Context, record *domain.RecordParam) error {
@@ -79,5 +88,14 @@ func (p *ProxyUsecase) CreateSecurityScanning(ctx context.Context, req *domain.C
 }
 
 func (p *ProxyUsecase) TaskHandle(ctx context.Context, task *queuerunner.Task[domain.CreateSecurityScanningReq]) error {
+	p.logger.With("id", task.ID).DebugContext(ctx, "task started")
+
+	resp, err := request.Post[request.Response[scan.Result]](p.client, "/api/v1/scan", task.Data)
+	if err != nil {
+		p.logger.With("id", task.ID).With("error", err).ErrorContext(ctx, "failed to post")
+		return err
+	}
+
+	p.logger.With("id", task.ID).With("result", resp.Data).DebugContext(ctx, "task done")
 	return nil
 }

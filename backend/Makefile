@@ -23,16 +23,25 @@ image:
 	  --output ${OUTPUT} \
 	  .
 
-image-nginx:
+image-scanner:
 	docker buildx build \
-	  -f build/Dockerfile.nginx \
+	  -f build/Dockerfile.scanner \
+	  --build-arg GOCACHE=${GOCACHE} \
+	  --build-arg GOMODCACHE=${GOMODCACHE} \
+	  --build-arg REPO_COMMIT=$(shell git rev-parse HEAD) \
+	  --build-arg VERSION=${VERSION} \
+	  --build-arg BUILD_TIME=${BUILD_TIME} \
+	  --build-arg GIT_COMMIT=${GIT_COMMIT} \
 	  --platform ${PLATFORM} \
-	  --tag ${REGISTRY}/nginx:${TAG} \
+	  --tag ${REGISTRY}/scanner:${TAG} \
 	  --output ${OUTPUT} \
 	  .
 
 wire:
 	wire cmd/server/wire.go cmd/server/main.go
+
+wire-scanner:
+	wire cmd/scanner/wire.go cmd/scanner/main.go
 
 swag:
 	swag fmt -d internal && swag init --pd -g cmd/server/main.go -ot "json"
