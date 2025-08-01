@@ -76,6 +76,10 @@ type Config struct {
 	DataReport struct {
 		Key string `mapstructure:"key"`
 	} `mapstructure:"data_report"`
+
+	Security struct {
+		QueueLimit int `mapstructure:"queue_limit"`
+	} `mapstructure:"security"`
 }
 
 func (c *Config) GetBaseURL(req *http.Request, settings *domain.Setting) string {
@@ -142,6 +146,7 @@ func Init() (*Config, error) {
 	v.SetDefault("extension.limit", 1)
 	v.SetDefault("extension.limit_second", 10)
 	v.SetDefault("data_report.key", "")
+	v.SetDefault("security.queue_limit", 5)
 
 	c := Config{}
 	if err := v.Unmarshal(&c); err != nil {
