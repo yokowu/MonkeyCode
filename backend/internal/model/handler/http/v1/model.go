@@ -90,8 +90,6 @@ func (h *ModelHandler) List(c *web.Context) error {
 //	@Success		200			{object}	web.Resp{data=[]domain.Model}
 //	@Router			/api/v1/model/my [get]
 func (h *ModelHandler) MyModelList(c *web.Context, req domain.MyModelListReq) error {
-	user := middleware.GetAdmin(c)
-	req.UserID = user.ID
 	models, err := h.usecase.MyModelList(c.Request().Context(), &req)
 	if err != nil {
 		return err
@@ -111,8 +109,8 @@ func (h *ModelHandler) MyModelList(c *web.Context, req domain.MyModelListReq) er
 //	@Success		200		{object}	web.Resp{data=domain.Model}
 //	@Router			/api/v1/model [post]
 func (h *ModelHandler) Create(c *web.Context, req domain.CreateModelReq) error {
-	user := middleware.GetAdmin(c)
-	req.UserID = user.ID
+	admin := middleware.GetAdmin(c)
+	req.AdminID = admin.ID
 	req.APIBase = strings.TrimSuffix(req.APIBase, "/")
 	m, err := h.usecase.Create(c.Request().Context(), &req)
 	if err != nil {

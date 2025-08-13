@@ -15,6 +15,7 @@ import (
 	"github.com/chaitin/MonkeyCode/backend/config"
 	"github.com/chaitin/MonkeyCode/backend/db"
 	_ "github.com/chaitin/MonkeyCode/backend/db/runtime"
+	"github.com/chaitin/MonkeyCode/backend/ent/rule"
 )
 
 func NewEntDB(cfg *config.Config, logger *slog.Logger) (*db.Client, error) {
@@ -37,6 +38,7 @@ func NewEntDB(cfg *config.Config, logger *slog.Logger) (*db.Client, error) {
 	if cfg.Debug {
 		c = c.Debug()
 	}
+	c.Intercept(rule.PermissionInterceptor(logger.With("fn", "PermissionInterceptor")))
 
 	return c, nil
 }

@@ -71,7 +71,6 @@ var ModelProviderBrandModelsList = map[consts.ModelProvider][]ProviderModelListI
 }
 
 type MyModelListReq struct {
-	UserID    string           `json:"-"`
 	ModelType consts.ModelType `json:"model_type" query:"model_type"` // 模型类型 llm:对话模型 coder:代码模型
 }
 
@@ -115,7 +114,7 @@ type GetTokenUsageReq struct {
 }
 
 type CreateModelReq struct {
-	UserID     string               `json:"-"`
+	AdminID    uuid.UUID            `json:"-"`
 	ShowName   string               `json:"show_name"`                                                                                                                               // 模型显示名称
 	ModelName  string               `json:"model_name" validate:"required"`                                                                                                          // 模型名称 如: deepseek-v3
 	Provider   consts.ModelProvider `json:"provider" validate:"required,oneof=SiliconFlow OpenAI Ollama DeepSeek Moonshot AzureOpenAI BaiZhiCloud Hunyuan BaiLian Volcengine Other"` // 提供商
