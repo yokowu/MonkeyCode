@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"strings"
 	"sync"
 	"time"
 
@@ -44,6 +45,9 @@ type HeartbeatData struct {
 	ClientID  string `json:"clientId"`
 }
 
+// 大文件忽略阈值（按内容字节长度判断）
+const maxContentSizeBytes = 2 << 20 // 1 MB
+
 type SocketHandler struct {
 	config              *config.Config
 	logger              *slog.Logger
@@ -55,6 +59,7 @@ type SocketHandler struct {
 	workspaceCache      map[string]*domain.Workspace
 	cacheMutex          sync.RWMutex
 	workspaceProcessing sync.Map
+	updateSem           chan struct{}
 }
 
 func NewSocketHandler(config *config.Config, logger *slog.Logger, workspaceService domain.WorkspaceFileUsecase, workspaceUsecase domain.WorkspaceUsecase, userService domain.UserUsecase) (*SocketHandler, error) {
@@ -71,6 +76,7 @@ func NewSocketHandler(config *config.Config, logger *slog.Logger, workspaceServi
 		mu:               sync.Mutex{}, // 初始化互斥锁
 		workspaceCache:   make(map[string]*domain.Workspace),
 		cacheMutex:       sync.RWMutex{},
+		updateSem:        make(chan struct{}, 8), // 限制并发异步处理，避免堆积导致内存长期占用
 	}
 
 	// 设置事件处理器
@@ -176,13 +182,48 @@ func (h *SocketHandler) registerWorkspaceStatsHandler(socket *socketio.Socket) {
 }
 
 func (h *SocketHandler) handleFileUpdate(socket *socketio.Socket, data string) interface{} {
+	// 简化策略：按原始 JSON payload 长度判定是否忽略（len(data) > 1MB）
+	// 该策略更快更简单，可能在极端编码情况下与“content 实际字节数”存在细微差异，但已接受此权衡。
+	if len(data) > maxContentSizeBytes {
+		// 直接返回“received”ACK（不解析 ID，避免对超大 payload 进行任何解码）
+		immediateAck := AckResponse{
+			ID:      "",
+			Status:  "received",
+			Message: "File update received, processing...",
+		}
+
+		// 异步发送最终忽略结果（不进入后续解码与数据库流程）
+		go func() {
+			// 不解码原始数据，发送最小信息的忽略结果
+			h.sendFinalResult(socket, FileUpdateData{}, "ignored", "Payload exceeds 1MB; ignored")
+		}()
+
+		return immediateAck
+	}
+
 	var updateData FileUpdateData
-	if err := json.Unmarshal([]byte(data), &updateData); err != nil {
+	// 使用流式解码避免将整个字符串拷贝到新的 []byte，降低峰值内存
+	if err := json.NewDecoder(strings.NewReader(data)).Decode(&updateData); err != nil {
 		h.logger.Error("Failed to parse file update data", "error", err, "data", data)
 		return map[string]interface{}{
 			"status":  "error",
 			"message": "Invalid data format",
 		}
+	}
+
+	// 防御性二次校验（解码后内容仍可能很大时直接忽略）
+	if len(updateData.Content) > maxContentSizeBytes {
+		// 清空引用以缩短生命周期
+		updateData.Content = ""
+		immediateAck := AckResponse{
+			ID:      updateData.ID,
+			Status:  "received",
+			Message: "File update received, processing...",
+		}
+		go func(updateData FileUpdateData) {
+			h.sendFinalResult(socket, updateData, "ignored", "Content exceeds 1MB after decode; ignored")
+		}(updateData)
+		return immediateAck
 	}
 
 	// 立即返回确认收到
@@ -192,8 +233,14 @@ func (h *SocketHandler) handleFileUpdate(socket *socketio.Socket, data string) i
 		Message: "File update received, processing...",
 	}
 
-	// 异步处理文件操作
-	go h.processFileUpdateAsync(socket, updateData)
+	// 异步处理文件操作（并发受限）
+	go func(updateData FileUpdateData) {
+		// 获取并发令牌
+		h.updateSem <- struct{}{}
+		defer func() { <-h.updateSem }()
+
+		h.processFileUpdateAsync(socket, updateData)
+	}(updateData)
 
 	return immediateAck
 }
@@ -253,8 +300,30 @@ func (h *SocketHandler) handleFileUpdateFromObject(socket *socketio.Socket, data
 		Message: "File update received, processing...",
 	}
 
-	// 异步处理文件操作
-	go h.processFileUpdateAsync(socket, updateData)
+	// 对象数据的提前大文件忽略：避免进入异步处理
+	if len(updateData.Content) > maxContentSizeBytes {
+		// 清空大内容引用，缩短存活期
+		updateData.Content = ""
+
+		// 异步发送最终忽略结果
+		go func(id, filePath, event string) {
+			h.sendFinalResult(socket, FileUpdateData{
+				ID:       id,
+				FilePath: filePath,
+				Event:    event,
+			}, "ignored", "File content exceeds 1MB; ignored")
+		}(updateData.ID, updateData.FilePath, updateData.Event)
+
+		return immediateAck
+	}
+
+	// 异步处理文件操作（并发受限）
+	go func(updateData FileUpdateData) {
+		h.updateSem <- struct{}{}
+		defer func() { <-h.updateSem }()
+
+		h.processFileUpdateAsync(socket, updateData)
+	}(updateData)
 
 	return immediateAck
 }
@@ -263,6 +332,21 @@ func (h *SocketHandler) processFileUpdateAsync(socket *socketio.Socket, updateDa
 	// 处理文件操作
 	var finalStatus, message string
 	ctx := context.Background()
+
+	// 将可能很大的内容挪到局部变量，并清空结构体字段以缩短大字符串的存活周期
+	content := updateData.Content
+	updateData.Content = ""
+
+	// 大文件忽略：超过 1MB 直接跳过处理，避免内存与存储压力
+	if len(content) > maxContentSizeBytes {
+		h.logger.Info("Ignoring large file", "path", updateData.FilePath, "size", len(content), "threshold", maxContentSizeBytes, "event", updateData.Event)
+		finalStatus = "ignored"
+		message = "File content exceeds 1MB; ignored"
+		// 释放大字符串引用
+		content = ""
+		h.sendFinalResult(socket, updateData, finalStatus, message)
+		return
+	}
 
 	// 通过ApiKey获取用户信息
 	user, err := h.userService.GetUserByApiKey(ctx, updateData.ApiKey)
@@ -297,7 +381,7 @@ func (h *SocketHandler) processFileUpdateAsync(socket *socketio.Socket, updateDa
 			if db.IsNotFound(err) {
 				createReq := &domain.CreateWorkspaceFileReq{
 					Path:        updateData.FilePath,
-					Content:     updateData.Content,
+					Content:     content,
 					Hash:        updateData.Hash,
 					UserID:      userID,
 					WorkspaceID: workspaceID,
@@ -316,7 +400,7 @@ func (h *SocketHandler) processFileUpdateAsync(socket *socketio.Socket, updateDa
 								FilePath: updateData.FilePath,
 								// FileExtension: fileExtension,
 								Language: h.getFileLanguage(fileExtension),
-								Content:  updateData.Content,
+								Content:  content,
 							},
 						},
 					}
@@ -347,7 +431,7 @@ func (h *SocketHandler) processFileUpdateAsync(socket *socketio.Socket, updateDa
 			} else {
 				updateReq := &domain.UpdateWorkspaceFileReq{
 					ID:      existingFile.ID,
-					Content: &updateData.Content,
+					Content: &content,
 					Hash:    &updateData.Hash,
 				}
 				_, updateErr := h.workspaceService.Update(ctx, updateReq)
@@ -374,7 +458,7 @@ func (h *SocketHandler) processFileUpdateAsync(socket *socketio.Socket, updateDa
 
 		req := &domain.UpdateWorkspaceFileReq{
 			ID:      file.ID,
-			Content: &updateData.Content,
+			Content: &content,
 			Hash:    &updateData.Hash,
 		}
 		_, err = h.workspaceService.Update(ctx, req)
@@ -394,7 +478,7 @@ func (h *SocketHandler) processFileUpdateAsync(socket *socketio.Socket, updateDa
 						FilePath: updateData.FilePath,
 						// FileExtension: fileExtension,
 						Language: h.getFileLanguage(fileExtension),
-						Content:  updateData.Content,
+						Content:  content,
 					},
 				},
 			}
