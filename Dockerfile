@@ -3,10 +3,12 @@ FROM --platform=$BUILDPLATFORM golang:1.25-alpine AS builder
 WORKDIR /src
 ENV CGO_ENABLED=0
 
-COPY go.* .
+COPY go.work* ./
+COPY backend ./backend
+COPY socket.io-golang ./socket.io-golang
 ARG GOMODCACHE
 RUN --mount=type=cache,target=${GOMODCACHE} \
-    go mod download
+    GOPROXY=https://goproxy.cn,direct go mod download
 
 ARG TARGETOS TARGETARCH GOCACHE
 ARG VERSION
@@ -19,14 +21,14 @@ GOOS=$TARGETOS GOARCH=$TARGETARCH \
 go build \
 -ldflags "-w -s -X 'github.com/chaitin/MonkeyCode/backend/pkg/version.Version=${VERSION}' -X 'github.com/chaitin/MonkeyCode/backend/pkg/version.BuildTime=${BUILD_TIME}' -X 'github.com/chaitin/MonkeyCode/backend/pkg/version.GitCommit=${GIT_COMMIT}'" \
 -o /out/main \
-pro/cmd/server/main.go pro/cmd/server/wire_gen.go 
+./backend/pro/cmd/server 
 
 FROM alpine:3.22.1 as binary
 
 WORKDIR /app
 
-ADD migration ./migration
-ADD assets/vsix ./assets/vsix
+ADD backend/migration ./migration
+ADD backend/assets/vsix ./assets/vsix
 
 COPY --from=builder /out/main /app/main
 
